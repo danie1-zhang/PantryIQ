@@ -1,0 +1,11 @@
+food_name,serving_size,serving_unit,calories,protein,carbs,fat,sodium_mg,cost_usd,category,source
+Greek yogurt,170,g,100,17,6,0,60,1.25,dairy,manual
+Chicken breast,100,g,165,31,0,3.6,74,1.80,protein,manual
+Eggs,2,large,140,12,1,10,140,0.70,protein,manual
+Milk,1,cup,150,8,12,8,120,0.50,dairy,manual
+Rice,1,cup cooked,205,4,45,0.4,2,0.30,carb,manual
+Oats,40,g,150,5,27,3,0,0.25,carb,manual
+Banana,1,medium,105,1,27,0.3,1,0.35,fruit,manual
+Tofu,100,g,144,17,3,9,14,1.00,protein,manual
+Salmon,100,g,208,20,0,13,59,3.00,protein,manual
+Broccoli,100,g,35,2.4,7,0.4,33,0.60,vegetable,manual
