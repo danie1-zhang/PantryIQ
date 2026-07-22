@@ -1,0 +1,52 @@
+food_id,food_name,food_category,serving_size,calories_per_serving,protein_g_per_serving,carbs_g_per_serving,fat_g_per_serving,sugar_g_per_serving,fiber_g_per_serving,sodium_mg_per_serving,cost_per_serving,source
+egg_large,Large Egg,protein,1 large egg,70,6,0,5,0,0,70,0.35,USDA estimate
+egg_whites,Egg Whites,protein,100 g,52,11,1,0,1,0,166,0.75,USDA estimate
+chicken_breast_cooked,Chicken Breast Cooked,protein,4 oz,187,35,0,4,0,0,80,2.25,USDA estimate
+chicken_thigh_cooked,Chicken Thigh Cooked,protein,4 oz,232,28,0,12,0,0,95,1.60,USDA estimate
+ground_beef_90_lean,Ground Beef 90 Percent Lean,protein,4 oz cooked,250,29,0,14,0,0,85,2.50,USDA estimate
+turkey_slices,Turkey Slices,protein,3 oz,90,18,2,1,1,0,650,1.75,USDA estimate
+salmon_cooked,Salmon Cooked,protein,4 oz,233,25,0,14,0,0,70,3.50,USDA estimate
+tuna_canned_water,Tuna Canned in Water,protein,1 can drained,120,26,0,1,0,0,300,1.25,USDA estimate
+shrimp_cooked,Shrimp Cooked,protein,4 oz,112,24,0,1,0,0,250,3.00,USDA estimate
+tofu_firm,Firm Tofu,protein,100 g,144,17,3,9,1,2,14,0.90,USDA estimate
+tempeh,Tempeh,protein,100 g,193,20,9,11,0,5,9,1.75,USDA estimate
+black_beans_cooked,Black Beans Cooked,protein_carb,1 cup,227,15,41,1,0,15,2,0.55,USDA estimate
+lentils_cooked,Lentils Cooked,protein_carb,1 cup,230,18,40,1,4,16,4,0.45,USDA estimate
+chickpeas_cooked,Chickpeas Cooked,protein_carb,1 cup,269,15,45,4,8,13,11,0.60,USDA estimate
+greek_yogurt_nonfat,Greek Yogurt Nonfat,dairy,170 g,100,17,6,0,5,0,60,1.50,USDA estimate
+cottage_cheese_lowfat,Cottage Cheese Lowfat,dairy,0.5 cup,90,12,5,2,4,0,350,0.85,USDA estimate
+milk_2_percent,Milk 2 Percent,dairy,1 cup,122,8,12,5,12,0,115,0.45,USDA estimate
+skim_milk,Skim Milk,dairy,1 cup,83,8,12,0,12,0,103,0.40,USDA estimate
+cheddar_cheese,Cheddar Cheese,dairy,1 oz,115,7,1,9,0,0,180,0.55,USDA estimate
+mozzarella_part_skim,Mozzarella Part Skim,dairy,1 oz,72,7,1,5,0,0,175,0.55,USDA estimate
+white_rice_cooked,White Rice Cooked,carb,1 cup,205,4,45,0,0,1,2,0.30,USDA estimate
+brown_rice_cooked,Brown Rice Cooked,carb,1 cup,216,5,45,2,1,4,10,0.40,USDA estimate
+oats_dry,Oats Dry,carb,0.5 cup dry,150,5,27,3,1,4,0,0.35,USDA estimate
+pasta_cooked,Pasta Cooked,carb,1 cup,220,8,43,1,1,3,1,0.40,USDA estimate
+whole_wheat_bread,Whole Wheat Bread,carb,1 slice,80,4,14,1,2,2,150,0.25,USDA estimate
+white_bread,White Bread,carb,1 slice,75,2,14,1,2,1,130,0.20,USDA estimate
+potato_baked,Baked Potato,carb,1 medium,161,4,37,0,2,4,17,0.60,USDA estimate
+sweet_potato_baked,Sweet Potato Baked,carb,1 medium,112,2,26,0,5,4,72,0.70,USDA estimate
+tortilla_flour,Flour Tortilla,carb,1 medium,140,4,24,4,1,1,300,0.35,USDA estimate
+banana,Banana,fruit,1 medium,105,1,27,0,14,3,1,0.30,USDA estimate
+apple,Apple,fruit,1 medium,95,0,25,0,19,4,2,0.70,USDA estimate
+blueberries,Blueberries,fruit,1 cup,84,1,21,0,15,4,1,1.25,USDA estimate
+strawberries,Strawberries,fruit,1 cup,49,1,12,0,7,3,2,1.00,USDA estimate
+orange,Orange,fruit,1 medium,62,1,15,0,12,3,0,0.80,USDA estimate
+avocado,Avocado,fat,0.5 avocado,120,2,6,11,0,5,5,0.90,USDA estimate
+peanut_butter,Peanut Butter,fat,2 tbsp,190,7,7,16,3,2,140,0.35,USDA estimate
+almonds,Almonds,fat,1 oz,164,6,6,14,1,4,0,0.70,USDA estimate
+olive_oil,Olive Oil,fat,1 tbsp,119,0,0,14,0,0,0,0.25,USDA estimate
+butter,Butter,fat,1 tbsp,102,0,0,12,0,0,91,0.20,USDA estimate
+broccoli_cooked,Broccoli Cooked,vegetable,1 cup,55,4,11,1,2,5,64,0.75,USDA estimate
+spinach_raw,Spinach Raw,vegetable,2 cups,14,2,2,0,0,1,48,0.70,USDA estimate
+carrots_raw,Carrots Raw,vegetable,1 medium,25,1,6,0,3,2,42,0.20,USDA estimate
+bell_pepper,Bell Pepper,vegetable,1 medium,31,1,7,0,5,2,4,0.80,USDA estimate
+onion,Onion,vegetable,1 medium,44,1,10,0,5,2,4,0.35,USDA estimate
+tomato,Tomato,vegetable,1 medium,22,1,5,0,3,1,6,0.50,USDA estimate
+broccoli_frozen,Frozen Broccoli,vegetable,1 cup,50,4,10,1,2,5,50,0.55,USDA estimate
+protein_bar,Protein Bar,snack,1 bar,200,20,22,7,5,5,200,2.00,brand estimate
+whey_protein,Whey Protein Powder,protein,1 scoop,120,24,3,2,1,0,120,1.25,brand estimate
+hummus,Hummus,snack,2 tbsp,70,2,4,5,0,2,130,0.40,USDA estimate
+salsa,Salsa,condiment,2 tbsp,10,0,2,0,1,0,230,0.15,USDA estimate
+soy_sauce,Soy Sauce,condiment,1 tbsp,10,1,1,0,0,0,879,0.10,USDA estimate
