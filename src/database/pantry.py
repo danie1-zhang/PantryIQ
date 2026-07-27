@@ -106,7 +106,7 @@ class Pantry:
 
 
     @classmethod
-    def empty(cls, food_catalog_path: str | Path | None = None, pantry_path: str | Path | None = None,) -> Pantry:
+    def empty(cls, food_catalog_path: str | Path | None = None, pantry_path: str | Path | None = None) -> Pantry:
         "Create an empty pantry backed by a food catalog."
         catalog_path = (Path(food_catalog_path) if food_catalog_path else cls.default_food_catalog_path())
         food_catalog = cls._read_csv(catalog_path, "food catalog")
@@ -114,7 +114,7 @@ class Pantry:
 
 
     @classmethod
-    def from_csv(cls, pantry_path: str | Path, food_catalog_path: str | Path | None = None,) -> Pantry:
+    def from_csv(cls, pantry_path: str | Path, food_catalog_path: str | Path | None = None) -> Pantry:
         "Load an existing pantry CSV and its food catalog."
         pantry_path = Path(pantry_path)
         catalog_path = (Path(food_catalog_path) if food_catalog_path else cls.default_food_catalog_path())
@@ -135,7 +135,7 @@ class Pantry:
             raise ValueError(f"The {description} CSV could not be parsed: {path}") from exc
 
 
-    def _prepare_food_catalog(self, food_catalog: pd.DataFrame,) -> pd.DataFrame:
+    def _prepare_food_catalog(self, food_catalog: pd.DataFrame) -> pd.DataFrame:
         "Normalize and validate food catalog columns."
         catalog = food_catalog.copy()
         catalog = catalog.rename(columns=self.CATALOG_COLUMN_ALIASES)
@@ -174,7 +174,7 @@ class Pantry:
             "cost_per_serving",
         ]
 
-        for column in numeric_columns:catalog[column] = pd.to_numeric(catalog[column], errors="coerce",)
+        for column in numeric_columns:catalog[column] = pd.to_numeric(catalog[column], errors="coerce")
             if (catalog[column].dropna() < 0).any():
                 raise ValueError(f"Food catalog column '{column}' contains negative values.")
 
@@ -184,7 +184,7 @@ class Pantry:
         return catalog.reset_index(drop=True)
 
 
-    def _prepare_pantry_items(self, pantry_items: pd.DataFrame | None,) -> pd.DataFrame:
+    def _prepare_pantry_items(self, pantry_items: pd.DataFrame | None) -> pd.DataFrame:
         "Create or validate the pantry inventory DataFrame."
         if pantry_items is None:
             return pd.DataFrame(columns=self.PANTRY_COLS)
