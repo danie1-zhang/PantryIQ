@@ -267,7 +267,7 @@ class NutritionConstraintEvaluator:
 
 
     @staticmethod
-    def _minimum_goal_score(actual: float, goal: float, d) -> float:
+    def _minimum_goal_score(actual: float, goal: float) -> float:
         "Score a minimum goal where exceeding the goal is not penalized."
         if actual >= goal:
             return 100.0
