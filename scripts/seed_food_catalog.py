@@ -9,6 +9,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from sqlalchemy import select
+from sqlalchemy.orm import Session, sessionmaker
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -33,9 +34,15 @@ def optional_decimal(value: str | None) -> Decimal | None:
     return Decimal(value) if value and value.strip() else None
 
 
-def seed_food_catalog(catalog_path: Path = DEFAULT_CATALOG) -> tuple[int, int]:
+def seed_food_catalog(
+    catalog_path: Path = DEFAULT_CATALOG,
+    session_factory: sessionmaker[Session] = SessionLocal,
+) -> tuple[int, int]:
     created = updated = 0
-    with catalog_path.open(newline="", encoding="utf-8-sig") as catalog_file, SessionLocal.begin() as session:
+    with (
+        catalog_path.open(newline="", encoding="utf-8-sig") as catalog_file,
+        session_factory.begin() as session,
+    ):
         for row in csv.DictReader(catalog_file):
             serving_size, serving_unit = parse_serving(row["serving_size"])
             values = {
