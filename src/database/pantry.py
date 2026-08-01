@@ -174,7 +174,8 @@ class Pantry:
             "cost_per_serving",
         ]
 
-        for column in numeric_columns:catalog[column] = pd.to_numeric(catalog[column], errors="coerce")
+        for column in numeric_columns:
+            catalog[column] = pd.to_numeric(catalog[column], errors="coerce")
             if (catalog[column].dropna() < 0).any():
                 raise ValueError(f"Food catalog column '{column}' contains negative values.")
 
@@ -231,6 +232,7 @@ class Pantry:
             raise ValueError("is_available must contain true/false values.")
 
         pantry["date_added"] = pd.to_datetime(pantry["date_added"], errors="coerce",).dt.date
+        pantry["notes"] = pantry["notes"].fillna("")
         return pantry.reset_index(drop=True)
 
 

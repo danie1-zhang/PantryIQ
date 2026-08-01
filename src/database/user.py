@@ -1,7 +1,6 @@
 from __future__ import annotations
 import re
 from pathlib import Path
-import pandas as pd
 from database.pantry import Pantry
 from optimizer.best_meal import MealOptimizer, OptimizerResult
 from optimizer.nutrition_constraints import NutritionConstraints
@@ -42,7 +41,10 @@ class User:
     @classmethod
     def from_existing_pantry(cls, *, name: str, age: int, height_inches: float, weight_pounds: float, pantry_path: str | Path, food_catalog_path: str | Path,) -> User:
         "Create a user by loading an existing pantry CSV."
-        pantry = Pantry.from_csv(pantry_path=pantry_path food_catalog_path=food_catalog_path,)
+        pantry = Pantry.from_csv(
+            pantry_path=pantry_path,
+            food_catalog_path=food_catalog_path,
+        )
         return cls(name=name, age=age, height_inches=height_inches, weight_pounds=weight_pounds, pantry=pantry,)
 
 

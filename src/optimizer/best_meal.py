@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Mapping
 import pandas as pd
 
-from nutrition_optimizer.nutrition_constraints import (
+from optimizer.nutrition_constraints import (
     MealEvaluation,
     NutritionConstraints,
     NutritionConstraintEvaluator,
