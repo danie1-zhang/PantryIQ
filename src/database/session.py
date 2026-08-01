@@ -1,15 +1,13 @@
-import os
 from collections.abc import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from src.app.settings import get_settings
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/nutrition_optimizer"
-)
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+settings = get_settings()
+engine = create_engine(settings.database_url, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, class_=Session, autoflush=False, expire_on_commit=False)
 
 
