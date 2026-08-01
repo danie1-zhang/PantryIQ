@@ -12,7 +12,7 @@ Meal planning is often treated as a search problem:
 
 This project explores that problem by combining pantry management, nutrition evaluation, and optimization.
 
-Version 1 focuses on building the optimization pipeline before introducing databases, machine learning, or web infrastructure.
+Version 1 established the optimization pipeline. The current version adds a PostgreSQL persistence layer while keeping the API and frontend as future work.
 
 ---
 
@@ -25,7 +25,75 @@ Version 1 focuses on building the optimization pipeline before introducing datab
 - Meal feasibility scoring
 - Best meal selection
 - Pantry updates after meal acceptance
-- Unit tests
+- PostgreSQL persistence with SQLAlchemy 2
+- Alembic database migrations
+- Isolated unit and PostgreSQL integration tests
+
+---
+
+## Local Setup
+
+### Requirements
+
+- Python 3.13 or newer
+- [uv](https://docs.astral.sh/uv/)
+- PostgreSQL
+
+Install the Python dependencies:
+
+```bash
+uv sync
+```
+
+### Development environment
+
+Create `.env` in the repository root:
+
+```dotenv
+ENVIRONMENT=development
+DATABASE_URL=postgresql+psycopg://YOUR_POSTGRES_USER@localhost:5432/nutrition_optimizer
+```
+
+Homebrew PostgreSQL usually creates a role matching your macOS username. You can check it with:
+
+```bash
+psql -d postgres -Atc 'SELECT current_user'
+```
+
+Create the development database, apply its migrations, and import the food catalog:
+
+```bash
+createdb nutrition_optimizer
+uv run alembic upgrade head
+uv run python scripts/seed_food_catalog.py
+```
+
+The seed command can be run again safely. Existing catalog records are updated rather than duplicated.
+
+### Test environment
+
+Create a second file named `.env.test`:
+
+```dotenv
+ENVIRONMENT=test
+DATABASE_URL=postgresql+psycopg://YOUR_POSTGRES_USER@localhost:5432/nutrition_optimizer_test
+```
+
+Create the isolated test database:
+
+```bash
+createdb nutrition_optimizer_test
+```
+
+Then run the complete test suite:
+
+```bash
+uv run pytest
+```
+
+The database test fixtures apply the Alembic migration and clean the test tables between tests. Test configuration is rejected unless the database name ends in `_test`, which protects the development database from test cleanup.
+
+Both `.env` and `.env.test` are ignored by Git. Commit `.env.example` only; never commit real database passwords or other secrets.
 
 ---
 
@@ -41,6 +109,8 @@ Version 1 focuses on building the optimization pipeline before introducing datab
 │
 ├── src/
 │   ├── database/
+│   │   ├── models.py
+│   │   ├── session.py
 │   │   ├── pantry.py
 │   │   └── user.py
 │   │
@@ -48,6 +118,9 @@ Version 1 focuses on building the optimization pipeline before introducing datab
 │       ├── nutrition_constraints.py
 │       └── best_meal.py
 │
+├── alembic/
+├── scripts/
+│   └── seed_food_catalog.py
 └── tests/
 ```
 
@@ -118,7 +191,7 @@ Optional
 
 ## Current Architecture
 
-The project currently consists of four primary components.
+The project currently consists of the optimizer, legacy CSV pantry workflow, and PostgreSQL persistence layer.
 
 ### Pantry
 
@@ -136,6 +209,10 @@ Generates candidate meals and returns the best one found.
 
 Coordinates the entire application and user interaction.
 
+### Database
+
+SQLAlchemy models store users, foods, pantry inventory, and accepted meals in PostgreSQL. Alembic manages schema changes, and the CSV catalog provides the initial food records.
+
 ---
 
 ## Current Limitations
@@ -145,10 +222,10 @@ Version 1 intentionally keeps the system simple.
 Current limitations include
 
 - manually maintained food catalog
-- CSV storage
 - randomized search
-- no database
 - no frontend
+- no API routes yet
+- no authentication yet
 - no deployment
 - one meal optimization only
 - no learned user preferences
@@ -159,7 +236,6 @@ Current limitations include
 
 Planned improvements include
 
-- PostgreSQL storage
 - automated food ingestion
 - better optimization algorithms
 - continuous serving optimization
