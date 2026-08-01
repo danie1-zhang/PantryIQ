@@ -244,4 +244,4 @@ No deployment or persistence beyond CSV storage exists.
 - frontend
 - FastAPI backend
 - learned preferences
-- LLM-powered assistant
+- LLM powered assistant
