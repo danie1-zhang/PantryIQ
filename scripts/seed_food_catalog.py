@@ -4,16 +4,20 @@ from __future__ import annotations
 import argparse
 import csv
 import re
+import sys
 from decimal import Decimal
 from pathlib import Path
 
 from sqlalchemy import select
 
-from src.database.models import Food
-from src.database.session import SessionLocal
-
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.database.models import Food  # noqa: E402
+from src.database.session import SessionLocal  # noqa: E402
+
+
 DEFAULT_CATALOG = PROJECT_ROOT / "data" / "food_catalog.csv"
 SERVING_PATTERN = re.compile(r"^\s*(\d+(?:\.\d+)?)\s+(.+?)\s*$")
 
