@@ -32,7 +32,10 @@ class OpenAICompatiblePreferenceProvider:
     settings: Settings
 
     def parse(self, text: str) -> str:
-        if self.settings.llm_api_key is None:
+        if (
+            self.settings.llm_api_key is None
+            or not self.settings.llm_api_key.get_secret_value().strip()
+        ):
             raise ExternalServiceError("Natural-language parsing is not configured")
         payload = json.dumps(
             {
