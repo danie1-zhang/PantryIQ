@@ -66,6 +66,7 @@ Create the development database, apply its migrations, and import the food catal
 createdb nutrition_optimizer
 uv run alembic upgrade head
 uv run python scripts/seed_food_catalog.py
+uv run python scripts/seed_development_user.py
 ```
 
 The seed command can be run again safely. Existing catalog records are updated rather than duplicated.
@@ -94,6 +95,14 @@ uv run pytest
 The database test fixtures apply the Alembic migration and clean the test tables between tests. Test configuration is rejected unless the database name ends in `_test`, which protects the development database from test cleanup.
 
 Both `.env` and `.env.test` are ignored by Git. Commit `.env.example` only; never commit real database passwords or other secrets.
+
+### Run the API
+
+```bash
+uv run uvicorn src.app.main:app --reload
+```
+
+The API is available under `http://127.0.0.1:8000/api/v1`. Interactive OpenAPI documentation is available at `http://127.0.0.1:8000/docs`.
 
 ---
 
