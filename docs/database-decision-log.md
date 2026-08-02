@@ -242,6 +242,5 @@ An accepted-meal event should only be published after the database transaction c
 4. Pantry, meal generation, and history screens.
 5. Registration, password hashing, and token authentication. (complete)
 6. Docker and local service orchestration.
-7. RabbitMQ and the first justified background task.
 
 This order keeps each stage testable and avoids adding infrastructure before there is a feature that needs it.
