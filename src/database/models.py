@@ -18,6 +18,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database.base import Base
@@ -147,6 +148,25 @@ class Food(TimestampMixin, Base):
     fiber: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     sodium: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     cost_per_serving: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
+    cuisine_tags: Mapped[list[str]] = mapped_column(
+        ARRAY(String(50)), default=list, server_default="{}", nullable=False
+    )
+    dietary_tags: Mapped[list[str]] = mapped_column(
+        ARRAY(String(50)), default=list, server_default="{}", nullable=False
+    )
+    allergen_tags: Mapped[list[str]] = mapped_column(
+        ARRAY(String(50)), default=list, server_default="{}", nullable=False
+    )
+    ingredient_tags: Mapped[list[str]] = mapped_column(
+        ARRAY(String(100)), default=list, server_default="{}", nullable=False
+    )
+    flavor_tags: Mapped[list[str]] = mapped_column(
+        ARRAY(String(50)), default=list, server_default="{}", nullable=False
+    )
+    spice_level: Mapped[str] = mapped_column(String(20), default="none", server_default="none")
+    is_cuisine_neutral: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
 
     pantry_items: Mapped[list[PantryItem]] = relationship(back_populates="food")
     meal_log_items: Mapped[list[MealLogItem]] = relationship(back_populates="food")

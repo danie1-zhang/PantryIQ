@@ -6,6 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, StringConstraints, field_validator, model_validator
 
 from src.database.models import MealLog, MealLogItem
+from src.schemas.preferences import ExcludedFoodResponse, ParsedMealPreferences
 
 PositiveGoal = Annotated[Decimal, Field(gt=0)]
 NonnegativeMaximum = Annotated[Decimal, Field(ge=0)]
@@ -48,6 +49,7 @@ class MealGenerateRequest(BaseModel):
     excluded_meals: Annotated[list[ExcludedMeal], Field(max_length=20)] = Field(
         default_factory=list
     )
+    preferences: ParsedMealPreferences | None = None
 
 
 class GeneratedMealItem(BaseModel):
@@ -83,6 +85,8 @@ class MealGenerateResponse(BaseModel):
     candidates_generated: int
     valid_candidates_evaluated: int
     disclaimer: str
+    preference_summary: list[str] = Field(default_factory=list)
+    excluded_foods: list[ExcludedFoodResponse] = Field(default_factory=list)
 
 
 class MealAcceptItem(BaseModel):

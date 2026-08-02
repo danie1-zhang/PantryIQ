@@ -21,6 +21,7 @@ def test_settings_accept_postgresql_database_url() -> None:
 def test_settings_parse_comma_separated_cors_origins() -> None:
     settings = Settings(
         _env_file=None,
+        environment="development",
         database_url="postgresql+psycopg://user@localhost/nutrition_optimizer",
         cors_origins="http://localhost:5173, https://staging.example.com",
         jwt_secret_key=SECRET,
@@ -29,7 +30,8 @@ def test_settings_parse_comma_separated_cors_origins() -> None:
     assert settings.cors_origins == ["http://localhost:5173", "https://staging.example.com"]
 
 
-def test_settings_require_database_url() -> None:
+def test_settings_require_database_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("DATABASE_URL", raising=False)
     with pytest.raises(ValidationError):
         Settings(_env_file=None)
 
@@ -78,6 +80,7 @@ def test_settings_require_strong_jwt_secret() -> None:
     with pytest.raises(ValidationError, match="at least 32"):
         Settings(
             _env_file=None,
+            environment="development",
             database_url="postgresql+psycopg://user@localhost/nutrition_optimizer",
             jwt_secret_key="too-short",
         )

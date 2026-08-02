@@ -108,6 +108,7 @@ export interface MealConstraints {
   optimization_method?: "cp_sat" | "random";
   time_limit_seconds?: number;
   excluded_meals?: MealExclusion[];
+  preferences?: ParsedMealPreferences | null;
 }
 
 export interface MealExclusion {
@@ -147,6 +148,8 @@ export interface MealRecommendation {
   candidates_generated: number;
   valid_candidates_evaluated: number;
   disclaimer: string;
+  preference_summary: string[];
+  excluded_foods: Array<{ food_id: string; food_name: string; reason: string }>;
 }
 
 export interface LoggedMealItem extends MealItem {
@@ -192,3 +195,4 @@ export interface AcceptMealInput {
   rating?: number | null;
   notes?: string | null;
 }
+import type { ParsedMealPreferences } from "./preferences";

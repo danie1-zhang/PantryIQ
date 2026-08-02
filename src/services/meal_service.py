@@ -10,6 +10,7 @@ from src.optimizer.adapter import pantry_items_to_optimizer_foods
 from src.optimizer.cp_sat_optimizer import OptimizationTimeoutError
 from src.optimizer.nutrition_constraints import NutritionConstraints
 from src.optimizer.service import optimize_meal
+from src.services.preference_service import filter_and_score_foods, interpretation_summary
 from src.schemas.meal import (
     GeneratedMealItem,
     MealAcceptRequest,
@@ -43,6 +44,10 @@ def generate_meal(
     foods = pantry_items_to_optimizer_foods(pantry_items)
     if not foods:
         raise BusinessRuleError("Pantry does not contain any eligible foods")
+    preference_result = None
+    if request.preferences is not None:
+        preference_result = filter_and_score_foods(foods, request.preferences)
+        foods = preference_result.eligible_foods
     constraints = NutritionConstraints(
         calorie_goal=float(request.calorie_goal),
         protein_goal=float(request.protein_goal),
@@ -63,6 +68,9 @@ def generate_meal(
                 {str(item.food_id): float(item.servings) for item in meal.items}
                 for meal in request.excluded_meals
             ],
+            required_categories=(
+                request.preferences.required_categories if request.preferences else None
+            ),
         )
     except OptimizationTimeoutError as exc:
         raise ConflictError(str(exc)) from exc
@@ -112,6 +120,21 @@ def generate_meal(
         candidates_generated=result.candidates_generated,
         valid_candidates_evaluated=result.valid_candidates_evaluated,
         disclaimer=disclaimer,
+        preference_summary=(
+            interpretation_summary(request.preferences) if request.preferences else []
+        ),
+        excluded_foods=(
+            [
+                {
+                    "food_id": excluded.food_id,
+                    "food_name": excluded.food_name,
+                    "reason": excluded.reason,
+                }
+                for excluded in preference_result.excluded_foods
+            ]
+            if preference_result
+            else []
+        ),
     )
 
 

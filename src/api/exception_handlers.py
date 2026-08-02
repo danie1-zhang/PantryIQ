@@ -5,6 +5,7 @@ from src.services.exceptions import (
     AuthenticationError,
     BusinessRuleError,
     ConflictError,
+    ExternalServiceError,
     ResourceNotFoundError,
 )
 
@@ -30,4 +31,10 @@ def register_exception_handlers(app: FastAPI) -> None:
             status_code=status.HTTP_401_UNAUTHORIZED,
             content={"detail": str(exc)},
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    @app.exception_handler(ExternalServiceError)
+    def external_service_handler(request: Request, exc: ExternalServiceError) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, content={"detail": str(exc)}
         )

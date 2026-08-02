@@ -28,6 +28,15 @@ class OptimizerFood:
     cost_per_serving: Decimal
     is_available: bool = True
     is_active: bool = True
+    cuisine_tags: tuple[str, ...] = ()
+    dietary_tags: tuple[str, ...] = ()
+    allergen_tags: tuple[str, ...] = ()
+    ingredient_tags: tuple[str, ...] = ()
+    flavor_tags: tuple[str, ...] = ()
+    spice_level: str = "none"
+    is_cuisine_neutral: bool = False
+    preference_score: int = 0
+    is_required: bool = False
 
 
 @dataclass(frozen=True)

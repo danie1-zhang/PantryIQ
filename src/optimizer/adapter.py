@@ -48,6 +48,13 @@ def pantry_items_to_optimizer_foods(items: list[PantryItem]) -> list[OptimizerFo
                 cost_per_serving=food.cost_per_serving or Decimal("0"),
                 # The current Food model has no active flag. Existing canonical rows are active.
                 is_active=True,
+                cuisine_tags=tuple(food.cuisine_tags),
+                dietary_tags=tuple(food.dietary_tags),
+                allergen_tags=tuple(food.allergen_tags),
+                ingredient_tags=tuple(food.ingredient_tags),
+                flavor_tags=tuple(food.flavor_tags),
+                spice_level=food.spice_level,
+                is_cuisine_neutral=food.is_cuisine_neutral,
             )
         )
     return foods
@@ -73,6 +80,7 @@ def optimizer_foods_to_frame(foods: list[OptimizerFood]) -> pd.DataFrame:
                 "fiber_g_per_serving": float(food.fiber_g_per_serving),
                 "sodium_mg_per_serving": float(food.sodium_mg_per_serving),
                 "cost_per_serving": float(food.cost_per_serving),
+                "preference_score": food.preference_score,
             }
             for food in foods
         ]

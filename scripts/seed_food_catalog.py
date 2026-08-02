@@ -20,6 +20,7 @@ from src.database.models import Food  # noqa: E402
 from src.database.session import SessionLocal  # noqa: E402
 
 DEFAULT_CATALOG = PROJECT_ROOT / "data" / "food_catalog.csv"
+DEFAULT_METADATA = PROJECT_ROOT / "data" / "food_preference_metadata.csv"
 SERVING_PATTERN = re.compile(r"^\s*(\d+(?:\.\d+)?)\s+(.+?)\s*$")
 
 
@@ -34,11 +35,34 @@ def optional_decimal(value: str | None) -> Decimal | None:
     return Decimal(value) if value and value.strip() else None
 
 
+def parse_tags(value: str | None) -> list[str]:
+    return [tag.strip().lower() for tag in (value or "").split(";") if tag.strip()]
+
+
+def load_preference_metadata(path: Path = DEFAULT_METADATA) -> dict[str, dict[str, object]]:
+    if not path.exists():
+        return {}
+    with path.open(newline="", encoding="utf-8-sig") as metadata_file:
+        return {
+            row["food_id"]: {
+                "cuisine_tags": parse_tags(row["cuisine_tags"]),
+                "dietary_tags": parse_tags(row["dietary_tags"]),
+                "allergen_tags": parse_tags(row["allergen_tags"]),
+                "ingredient_tags": parse_tags(row["ingredient_tags"]),
+                "flavor_tags": parse_tags(row["flavor_tags"]),
+                "spice_level": row["spice_level"].strip().lower() or "none",
+                "is_cuisine_neutral": row["is_cuisine_neutral"].strip().lower() == "true",
+            }
+            for row in csv.DictReader(metadata_file)
+        }
+
+
 def seed_food_catalog(
     catalog_path: Path = DEFAULT_CATALOG,
     session_factory: sessionmaker[Session] = SessionLocal,
 ) -> tuple[int, int]:
     created = updated = 0
+    preference_metadata = load_preference_metadata()
     with (
         catalog_path.open(newline="", encoding="utf-8-sig") as catalog_file,
         session_factory.begin() as session,
@@ -63,6 +87,7 @@ def seed_food_catalog(
                 "sodium": Decimal(row["sodium_mg_per_serving"]),
                 "cost_per_serving": optional_decimal(row["cost_per_serving"]),
             }
+            values.update(preference_metadata.get(row["food_id"].strip(), {}))
             food = session.scalar(
                 select(Food).where(
                     Food.external_source == values["external_source"],

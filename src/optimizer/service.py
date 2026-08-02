@@ -15,6 +15,7 @@ def optimize_meal(
     time_limit_seconds: float = DEFAULT_TIME_LIMIT_SECONDS,
     number_of_candidates: int = 10_000,
     excluded_meals: list[dict[str, float]] | None = None,
+    required_categories: list[str] | None = None,
 ) -> OptimizerResult:
     """Run the selected optimizer and return a strategy-independent result."""
 
@@ -24,6 +25,7 @@ def optimize_meal(
             constraints,
             time_limit_seconds=time_limit_seconds,
             excluded_meals=excluded_meals,
+            required_categories=required_categories,
         ).solve()
     if method == "random":
         random_result = MealOptimizer(

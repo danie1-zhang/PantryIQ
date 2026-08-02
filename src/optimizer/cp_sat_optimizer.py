@@ -33,6 +33,7 @@ DEFAULT_MAX_TOTAL_SERVINGS = Decimal("8")
 DEFAULT_TIME_LIMIT_SECONDS = 2.0
 OBJECTIVE_SCALE = 1_000_000
 VIOLATION_PRIORITY = 10_000
+PREFERENCE_WEIGHT = 10
 
 OBJECTIVE_WEIGHTS = {
     "calories": 100,
@@ -102,6 +103,7 @@ class CpSatMealOptimizer:
         max_unique_foods: int = DEFAULT_MAX_UNIQUE_FOODS,
         max_total_servings: Decimal = DEFAULT_MAX_TOTAL_SERVINGS,
         excluded_meals: list[dict[str, float]] | None = None,
+        required_categories: list[str] | None = None,
     ) -> None:
         self.foods = [
             food
@@ -121,6 +123,7 @@ class CpSatMealOptimizer:
         self.max_unique_foods = max_unique_foods
         self.max_total_servings = max_total_servings
         self.excluded_meals = excluded_meals or []
+        self.required_categories = required_categories or []
         self.evaluator = NutritionConstraintEvaluator(optimizer_foods_to_frame(self.foods))
 
     def solve(self) -> OptimizerResult:
@@ -167,6 +170,18 @@ class CpSatMealOptimizer:
         model.add(sum(selected) <= min(self.max_unique_foods, len(self.foods)))
         model.add(sum(serving_units) <= servings_to_units(self.max_total_servings))
         self._exclude_previous_meals(model, serving_units, maximum_units)
+        for index, food in enumerate(self.foods):
+            if food.is_required:
+                model.add(selected[index] == 1)
+        for category in self.required_categories:
+            matches = [
+                selected[index]
+                for index, food in enumerate(self.foods)
+                if food.category == category
+            ]
+            if not matches:
+                raise ValueError(f"Required category is unavailable: {category}")
+            model.add(sum(matches) >= 1)
 
         protein_selected = [
             selected[index]
@@ -287,6 +302,10 @@ class CpSatMealOptimizer:
             )
 
         objective_terms.append(sum(selected) * OBJECTIVE_WEIGHTS["food_count"])
+        objective_terms.extend(
+            -selected[index] * food.preference_score * PREFERENCE_WEIGHT
+            for index, food in enumerate(self.foods)
+        )
         model.minimize(sum(objective_terms))
         return _BuiltModel(model, serving_units, totals, violations)
 

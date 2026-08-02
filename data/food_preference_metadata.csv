@@ -1,0 +1,14 @@
+food_id,cuisine_tags,dietary_tags,allergen_tags,ingredient_tags,flavor_tags,spice_level,is_cuisine_neutral
+chicken_breast_cooked,greek;mediterranean,dairy_free,,chicken,savory,none,false
+chicken_thigh_cooked,greek;mediterranean,dairy_free,,chicken,savory,none,false
+chickpeas_cooked,greek;middle_eastern;mediterranean;indian,dairy_free;vegan,,chickpea,earthy,none,false
+greek_yogurt_nonfat,greek;mediterranean,vegetarian,dairy,milk;yogurt,tangy,none,false
+olive_oil,greek;italian;mediterranean,dairy_free;vegan,,olive;olive oil,,none,true
+spinach_raw,greek;mediterranean,dairy_free;vegan,,spinach,,none,true
+tomato,greek;italian;mediterranean,dairy_free;vegan,,tomato,,none,true
+hummus,greek;middle_eastern;mediterranean,dairy_free;vegan,sesame,chickpea;tahini,savory,none,false
+white_rice_cooked,,dairy_free;vegan,,rice,,none,true
+brown_rice_cooked,,dairy_free;vegan,,rice,,none,true
+broccoli_cooked,,dairy_free;vegan,,broccoli,,none,true
+broccoli_frozen,,dairy_free;vegan,,broccoli,,none,true
+peanut_butter,,dairy_free;vegan,peanut,peanut;peanut oil,nutty,none,false

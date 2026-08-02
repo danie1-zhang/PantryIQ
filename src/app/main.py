@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.exception_handlers import register_exception_handlers
-from src.api.routes import auth, foods, health, meals, pantry, users
+from src.api.routes import auth, foods, health, meals, pantry, preferences, users
 from src.app.settings import get_settings
 
 API_PREFIX = "/api/v1"
@@ -18,5 +18,13 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-for router in (health.router, auth.router, foods.router, users.router, pantry.router, meals.router):
+for router in (
+    health.router,
+    auth.router,
+    foods.router,
+    users.router,
+    pantry.router,
+    preferences.router,
+    meals.router,
+):
     app.include_router(router, prefix=API_PREFIX)

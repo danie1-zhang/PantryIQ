@@ -131,6 +131,78 @@ def test_generate_marks_near_feasible_result(
     assert response.json()["constraint_violations"] == {"calories": 100}
 
 
+def test_generation_filters_hard_preferences_before_optimizer(
+    client, api_user, food_factory, api_session, monkeypatch
+) -> None:
+    chicken = food_factory(
+        name="Greek Chicken",
+        category="protein",
+        cuisine_tags=["greek"],
+        dietary_tags=["dairy_free"],
+        ingredient_tags=["chicken"],
+    )
+    rice = food_factory(
+        name="Rice",
+        category="carbohydrate",
+        dietary_tags=["dairy_free"],
+        is_cuisine_neutral=True,
+    )
+    peanut = food_factory(
+        name="Peanut Sauce",
+        category="condiment",
+        cuisine_tags=["greek"],
+        dietary_tags=["dairy_free"],
+        allergen_tags=["peanut"],
+    )
+    for item in (chicken, rice, peanut):
+        add_pantry(api_session, api_user, item)
+    captured = {}
+
+    def fake_optimize(foods, constraints, **options):
+        captured["foods"] = foods
+        return OptimizerResult(
+            meal={str(chicken.id): 1, str(rice.id): 1},
+            evaluation=MealEvaluation(
+                totals={
+                    "calories": 300,
+                    "protein_g": 30,
+                    "carbs_g": 30,
+                    "fat_g": 10,
+                    "sodium_mg": 0,
+                    "sugar_g": 0,
+                    "fiber_g": 0,
+                    "cost": 0,
+                },
+                constraint_scores={},
+                constraints_met={},
+                feasibility_score=100,
+                is_feasible=True,
+            ),
+            optimization_method="cp_sat",
+            solver_status="OPTIMAL",
+        )
+
+    monkeypatch.setattr(meal_service, "optimize_meal", fake_optimize)
+    response = client.post(
+        "/api/v1/meals/generate",
+        json=generation_payload(
+            preferences={
+                "cuisines": ["greek"],
+                "allergens": ["peanut"],
+                "dietary_rules": ["dairy_free"],
+                "preferred_ingredients": ["chicken"],
+            }
+        ),
+    )
+    assert response.status_code == 200
+    assert {item.food_id for item in captured["foods"]} == {str(chicken.id), str(rice.id)}
+    assert response.json()["excluded_foods"][0]["food_id"] == str(peanut.id)
+    assert (
+        next(item for item in captured["foods"] if item.food_id == str(chicken.id)).preference_score
+        > 0
+    )
+
+
 def test_generate_validates_method_and_time_limit(client, api_user) -> None:
     assert (
         client.post(

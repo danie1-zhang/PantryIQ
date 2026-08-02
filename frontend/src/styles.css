@@ -876,3 +876,17 @@ small {
     width: 100%;
   }
 }
+.preference-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.preference-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+}

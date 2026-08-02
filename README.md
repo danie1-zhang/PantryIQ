@@ -63,6 +63,11 @@ ACCESS_TOKEN_EXPIRE_MINUTES=15
 REFRESH_TOKEN_EXPIRE_DAYS=7
 AUTH_COOKIE_SECURE=false
 AUTH_COOKIE_SAMESITE=lax
+LLM_API_KEY=
+LLM_MODEL=gpt-4.1-mini
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_TIMEOUT_SECONDS=10
+LLM_MAX_RETRIES=1
 ```
 
 Homebrew PostgreSQL usually creates a role matching your macOS username. You can check it with:
@@ -266,6 +271,10 @@ SQLAlchemy models store users, foods, pantry inventory, and accepted meals in Po
 ### Authentication
 
 Argon2 password hashes protect credentials. Short-lived JWT access tokens remain in browser memory, while rotating opaque refresh tokens use an HttpOnly cookie and hashed PostgreSQL records. See `docs/authentication.md`.
+
+### Natural-language meal preferences
+
+Authenticated users can parse a meal request through `POST /api/v1/preferences/parse`. The provider performs semantic extraction only; trusted food metadata and deterministic backend rules enforce allergens, dietary rules, cuisine compatibility, ingredients, and spice limits before OR-Tools runs. See `docs/nlp_preference_layer_decision_log.md`.
 
 ---
 

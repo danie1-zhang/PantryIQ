@@ -16,3 +16,7 @@ class ConflictError(ApplicationError):
 
 class AuthenticationError(ApplicationError):
     """Credentials are absent, invalid, expired, revoked, or inactive."""
+
+
+class ExternalServiceError(ApplicationError):
+    """A configured external provider failed or returned invalid data."""

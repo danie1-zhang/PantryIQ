@@ -98,6 +98,28 @@ export function MealRecommendationCard({
           </ul>
         </div>
       )}
+      {meal.preference_summary.length > 0 && (
+        <div className="violation-summary">
+          <strong>Preference interpretation</strong>
+          <ul>
+            {meal.preference_summary.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {meal.excluded_foods.length > 0 && (
+        <div className="violation-summary">
+          <strong>Foods excluded by your request</strong>
+          <ul>
+            {meal.excluded_foods.map((food) => (
+              <li key={food.food_id}>
+                {food.food_name}: {food.reason}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <p className="disclaimer">{meal.disclaimer}</p>
       <div className="accept-fields">
         <div className="field">

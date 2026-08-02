@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     auth_cookie_secure: bool = True
     auth_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
     frontend_origin: str = "http://localhost:5173"
+    llm_api_key: SecretStr | None = None
+    llm_model: str = "gpt-4.1-mini"
+    llm_base_url: str = "https://api.openai.com/v1"
+    llm_timeout_seconds: float = Field(default=10, ge=1, le=60)
+    llm_max_retries: int = Field(default=1, ge=0, le=3)
 
     model_config = SettingsConfigDict(
         env_file=".env",

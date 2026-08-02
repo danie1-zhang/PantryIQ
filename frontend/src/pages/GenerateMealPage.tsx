@@ -6,7 +6,10 @@ import { useUser } from "../api/users";
 import { ErrorState, LoadingState } from "../components/AsyncState";
 import { MealConstraintsForm } from "../components/MealConstraintsForm";
 import { MealRecommendationCard } from "../components/MealRecommendationCard";
+import { PreferenceInput } from "../components/PreferenceInput";
+import { ParsedPreferenceSummary } from "../components/ParsedPreferenceSummary";
 import type { MealConstraints, MealExclusion, MealRecommendation } from "../types/api";
+import type { PreferenceParseResponse } from "../types/preferences";
 
 export function GenerateMealPage() {
   const profile = useUser();
@@ -15,9 +18,15 @@ export function GenerateMealPage() {
   const navigate = useNavigate();
   const [lastConstraints, setLastConstraints] = useState<MealConstraints | null>(null);
   const [excludedMeals, setExcludedMeals] = useState<MealExclusion[]>([]);
+  const [parsed, setParsed] = useState<PreferenceParseResponse | null>(null);
 
   function generateMeal(values: MealConstraints) {
-    const baseConstraints = { ...values, excluded_meals: undefined };
+    if (parsed?.preferences.clarification_needed) return;
+    const baseConstraints = {
+      ...values,
+      excluded_meals: undefined,
+      preferences: parsed?.preferences ?? null,
+    };
     setLastConstraints(baseConstraints);
     setExcludedMeals([]);
     accept.reset();
@@ -65,6 +74,13 @@ export function GenerateMealPage() {
           <p>Set your targets and we’ll search your available foods for the closest match.</p>
         </div>
       </header>
+      <PreferenceInput onParsed={setParsed} />
+      {parsed && (
+        <ParsedPreferenceSummary
+          value={parsed}
+          onChange={(preferences) => setParsed((current) => current && { ...current, preferences })}
+        />
+      )}
       <MealConstraintsForm
         profile={profile.data}
         submitting={generate.isPending}

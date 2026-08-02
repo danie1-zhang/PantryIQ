@@ -72,4 +72,6 @@ export const recommendation: MealRecommendation = {
   candidates_generated: 10000,
   valid_candidates_evaluated: 6800,
   disclaimer: "The solver proved this solution optimal for the encoded model.",
+  preference_summary: [],
+  excluded_foods: [],
 };
