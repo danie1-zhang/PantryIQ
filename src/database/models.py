@@ -39,12 +39,8 @@ class User(TimestampMixin, Base):
     __tablename__ = "users"
     __table_args__ = (
         CheckConstraint("age IS NULL OR age >= 0", name="age_nonnegative"),
-        CheckConstraint(
-            "height_inches IS NULL OR height_inches >= 0", name="height_nonnegative"
-        ),
-        CheckConstraint(
-            "weight_pounds IS NULL OR weight_pounds >= 0", name="weight_nonnegative"
-        ),
+        CheckConstraint("height_inches IS NULL OR height_inches >= 0", name="height_nonnegative"),
+        CheckConstraint("weight_pounds IS NULL OR weight_pounds >= 0", name="weight_nonnegative"),
         CheckConstraint("calorie_goal >= 0", name="calorie_goal_nonnegative"),
         CheckConstraint("protein_goal >= 0", name="protein_goal_nonnegative"),
         CheckConstraint("carbohydrate_goal >= 0", name="carb_goal_nonnegative"),
@@ -59,9 +55,7 @@ class User(TimestampMixin, Base):
         ),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -70,9 +64,13 @@ class User(TimestampMixin, Base):
     height_inches: Mapped[Decimal | None] = mapped_column(Numeric(6, 2))
     weight_pounds: Mapped[Decimal | None] = mapped_column(Numeric(7, 2))
     gender: Mapped[str | None] = mapped_column(String(50))
-    calorie_goal: Mapped[Decimal] = mapped_column(Numeric(8, 2), default=2000, server_default="2000")
+    calorie_goal: Mapped[Decimal] = mapped_column(
+        Numeric(8, 2), default=2000, server_default="2000"
+    )
     protein_goal: Mapped[Decimal] = mapped_column(Numeric(8, 2), default=50, server_default="50")
-    carbohydrate_goal: Mapped[Decimal] = mapped_column(Numeric(8, 2), default=275, server_default="275")
+    carbohydrate_goal: Mapped[Decimal] = mapped_column(
+        Numeric(8, 2), default=275, server_default="275"
+    )
     fat_goal: Mapped[Decimal] = mapped_column(Numeric(8, 2), default=78, server_default="78")
     sodium_maximum: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
     sugar_maximum: Mapped[Decimal | None] = mapped_column(Numeric(8, 2))
@@ -146,7 +144,9 @@ class PantryItem(TimestampMixin, Base):
     max_servings_per_meal: Mapped[Decimal] = mapped_column(Numeric(10, 3), nullable=False)
     expiration_date: Mapped[date | None] = mapped_column(Date)
     notes: Mapped[str | None] = mapped_column(Text)
-    is_available: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
+    is_available: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False
+    )
 
     user: Mapped[User] = relationship(back_populates="pantry_items")
     food: Mapped[Food] = relationship(back_populates="pantry_items")

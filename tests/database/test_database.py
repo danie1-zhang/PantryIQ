@@ -130,7 +130,11 @@ def test_nutrition_and_rating_checks_are_enforced(
     record_factory: object,
     overrides: dict[str, object],
 ) -> None:
-    record = record_factory(**overrides) if record_factory is make_food else record_factory(make_user(), **overrides)
+    record = (
+        record_factory(**overrides)
+        if record_factory is make_food
+        else record_factory(make_user(), **overrides)
+    )
     db_session.add(record)
 
     with pytest.raises(IntegrityError):

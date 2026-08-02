@@ -15,6 +15,16 @@ def test_settings_accept_postgresql_database_url() -> None:
     assert settings.database_url.endswith("/nutrition_optimizer")
 
 
+def test_settings_parse_comma_separated_cors_origins() -> None:
+    settings = Settings(
+        _env_file=None,
+        database_url="postgresql+psycopg://user@localhost/nutrition_optimizer",
+        cors_origins="http://localhost:5173, https://staging.example.com",
+    )
+
+    assert settings.cors_origins == ["http://localhost:5173", "https://staging.example.com"]
+
+
 def test_settings_require_database_url() -> None:
     with pytest.raises(ValidationError):
         Settings(_env_file=None)

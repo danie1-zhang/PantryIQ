@@ -1,7 +1,7 @@
 from __future__ import annotations
 import pandas as pd
 import pytest
-from optimizer.nutrition_constraints import (NutritionConstraints, NutritionConstraintEvaluator)
+from src.optimizer.nutrition_constraints import NutritionConstraints, NutritionConstraintEvaluator
 
 
 @pytest.fixture
@@ -42,7 +42,9 @@ def test_calculate_totals_for_one_meal(evaluator: NutritionConstraintEvaluator) 
     assert totals["cost"] == pytest.approx(3.75)
 
 
-def test_calculate_totals_supports_fractional_servings(evaluator: NutritionConstraintEvaluator) -> None:
+def test_calculate_totals_supports_fractional_servings(
+    evaluator: NutritionConstraintEvaluator,
+) -> None:
     meal = {"chicken": 0.5, "rice": 1.5}
     totals = evaluator.calculate_totals(meal)
     assert totals["calories"] == pytest.approx(400)
@@ -61,13 +63,18 @@ def test_calculate_totals_rejects_unknown_food(evaluator: NutritionConstraintEva
         evaluator.calculate_totals({"unknown_food": 1})
 
 
-def test_calculate_totals_rejects_nonpositive_servings(evaluator: NutritionConstraintEvaluator) -> None:
-    with pytest.raises(ValueError, match="must be greater than zero",):
+def test_calculate_totals_rejects_nonpositive_servings(
+    evaluator: NutritionConstraintEvaluator,
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match="must be greater than zero",
+    ):
         evaluator.calculate_totals({"chicken": 0})
 
 
 def test_exact_target_meal_gets_full_core_scores(evaluator: NutritionConstraintEvaluator) -> None:
-    meal = { "chicken": 1, "rice": 1, "broccoli": 1}
+    meal = {"chicken": 1, "rice": 1, "broccoli": 1}
 
     constraints = NutritionConstraints(
         calorie_goal=450,
@@ -102,13 +109,17 @@ def test_protein_above_goal_is_not_penalized(evaluator: NutritionConstraintEvalu
     assert result.constraints_met["protein"] is True
 
 
-def test_calorie_over_and_under_are_penalized_symmetrically(evaluator: NutritionConstraintEvaluator) -> None:
+def test_calorie_over_and_under_are_penalized_symmetrically(
+    evaluator: NutritionConstraintEvaluator,
+) -> None:
     under_score = evaluator._closeness_score(actual=450, target=500)
     over_score = evaluator._closeness_score(actual=550, target=500)
     assert under_score == pytest.approx(over_score)
 
 
-def test_calories_outside_tolerance_make_meal_infeasible(evaluator: NutritionConstraintEvaluator) -> None:
+def test_calories_outside_tolerance_make_meal_infeasible(
+    evaluator: NutritionConstraintEvaluator,
+) -> None:
     constraints = NutritionConstraints(
         calorie_goal=600,
         protein_goal=40,
@@ -116,7 +127,13 @@ def test_calories_outside_tolerance_make_meal_infeasible(evaluator: NutritionCon
         fat_goal=10,
     )
 
-    result = evaluator.evaluate(meal={"chicken": 1, "rice": 1,}, constraints=constraints)
+    result = evaluator.evaluate(
+        meal={
+            "chicken": 1,
+            "rice": 1,
+        },
+        constraints=constraints,
+    )
     assert result.totals["calories"] == pytest.approx(400)
     assert result.constraints_met["calories"] is False
     assert result.is_feasible is False
@@ -133,16 +150,27 @@ def test_optional_limits_are_checked(evaluator: NutritionConstraintEvaluator) ->
         cost_max=3,
     )
 
-    result = evaluator.evaluate(meal={"chicken": 1, "rice": 1, "broccoli": 1}, constraints=constraints)
+    result = evaluator.evaluate(
+        meal={"chicken": 1, "rice": 1, "broccoli": 1}, constraints=constraints
+    )
     assert result.constraints_met["sodium"] is False
     assert result.constraints_met["sugar"] is False
     assert result.constraints_met["cost"] is False
     assert result.is_feasible is False
 
 
-def test_optional_constraints_are_omitted_when_none(evaluator: NutritionConstraintEvaluator) -> None:
-    constraints = NutritionConstraints(calorie_goal=450, protein_goal=40, carbs_goal=55, fat_goal=6,)
-    result = evaluator.evaluate(meal={"chicken": 1, "rice": 1, "broccoli": 1}, constraints=constraints)
+def test_optional_constraints_are_omitted_when_none(
+    evaluator: NutritionConstraintEvaluator,
+) -> None:
+    constraints = NutritionConstraints(
+        calorie_goal=450,
+        protein_goal=40,
+        carbs_goal=55,
+        fat_goal=6,
+    )
+    result = evaluator.evaluate(
+        meal={"chicken": 1, "rice": 1, "broccoli": 1}, constraints=constraints
+    )
     assert "sodium" not in result.constraints_met
     assert "sugar" not in result.constraints_met
     assert "cost" not in result.constraints_met
@@ -155,6 +183,15 @@ def test_missing_required_food_column_raises_error(food_catalog_df: pd.DataFrame
 
 
 def test_duplicate_food_ids_raise_error(food_catalog_df: pd.DataFrame) -> None:
-    duplicate = pd.concat([food_catalog_df, food_catalog_df.iloc[[0]],], ignore_index=True)
-    with pytest.raises(ValueError, match="must be unique",):
+    duplicate = pd.concat(
+        [
+            food_catalog_df,
+            food_catalog_df.iloc[[0]],
+        ],
+        ignore_index=True,
+    )
+    with pytest.raises(
+        ValueError,
+        match="must be unique",
+    ):
         NutritionConstraintEvaluator(duplicate)

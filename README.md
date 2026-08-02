@@ -52,6 +52,7 @@ Create `.env` in the repository root:
 ```dotenv
 ENVIRONMENT=development
 DATABASE_URL=postgresql+psycopg://YOUR_POSTGRES_USER@localhost:5432/nutrition_optimizer
+CORS_ORIGINS=http://localhost:5173
 ```
 
 Homebrew PostgreSQL usually creates a role matching your macOS username. You can check it with:
@@ -78,6 +79,7 @@ Create a second file named `.env.test`:
 ```dotenv
 ENVIRONMENT=test
 DATABASE_URL=postgresql+psycopg://YOUR_POSTGRES_USER@localhost:5432/nutrition_optimizer_test
+CORS_ORIGINS=http://localhost:5173
 ```
 
 Create the isolated test database:
@@ -119,7 +121,8 @@ The API is available under `http://127.0.0.1:8000/api/v1`. Interactive OpenAPI d
 ├── src/
 │   ├── database/
 │   │   ├── models.py
-│   │   ├── session.py
+│   │   └── session.py
+│   ├── legacy/
 │   │   ├── pantry.py
 │   │   └── user.py
 │   │

@@ -43,6 +43,7 @@ class NutritionConstraints:
 @dataclass(frozen=True)
 class MealEvaluation:
     "Result returned after evaluating one candidate meal."
+
     totals: dict[str, float]
     constraint_scores: dict[str, float]
     constraints_met: dict[str, bool]
@@ -75,13 +76,19 @@ class NutritionConstraintEvaluator:
         "fat": 0.175,
     }
 
-
-    def __init__(self, food_data: pd.DataFrame, weights: Mapping[str, float] | None = None,) -> None:
+    def __init__(
+        self,
+        food_data: pd.DataFrame,
+        weights: Mapping[str, float] | None = None,
+    ) -> None:
         self.food_data = self._prepare_food_data(food_data)
         self.weights = self._prepare_weights(weights)
 
-
-    def evaluate(self, meal: Mapping[str, float], constraints: NutritionConstraints,) -> MealEvaluation:
+    def evaluate(
+        self,
+        meal: Mapping[str, float],
+        constraints: NutritionConstraints,
+    ) -> MealEvaluation:
         """
         Evaluate one meal against the supplied nutrition constraints.
 
@@ -99,17 +106,25 @@ class NutritionConstraintEvaluator:
         totals = self.calculate_totals(meal)
 
         constraint_scores = {
-            "calories": self._closeness_score(actual=totals["calories"], target=constraints.calorie_goal),
-            "protein": self._minimum_goal_score(actual=totals["protein_g"], goal=constraints.protein_goal),
+            "calories": self._closeness_score(
+                actual=totals["calories"], target=constraints.calorie_goal
+            ),
+            "protein": self._minimum_goal_score(
+                actual=totals["protein_g"], goal=constraints.protein_goal
+            ),
             "carbs": self._closeness_score(actual=totals["carbs_g"], target=constraints.carbs_goal),
-            "fat": self._closeness_score(actual=totals["fat_g"], target=constraints.fat_goal)
+            "fat": self._closeness_score(actual=totals["fat_g"], target=constraints.fat_goal),
         }
 
         constraints_met = {
             # For calories, carbs, and fat, "met" means within 10% of target.
-            "calories": self._within_tolerance(actual=totals["calories"], target=constraints.calorie_goal),
+            "calories": self._within_tolerance(
+                actual=totals["calories"], target=constraints.calorie_goal
+            ),
             "protein": totals["protein_g"] >= constraints.protein_goal,
-            "carbs": self._within_tolerance(actual=totals["carbs_g"], target=constraints.carbs_goal),
+            "carbs": self._within_tolerance(
+                actual=totals["carbs_g"], target=constraints.carbs_goal
+            ),
             "fat": self._within_tolerance(actual=totals["fat_g"], target=constraints.fat_goal),
         }
 
@@ -153,8 +168,10 @@ class NutritionConstraintEvaluator:
             is_feasible=is_feasible,
         )
 
-
-    def calculate_totals(self, meal: Mapping[str, float],) -> dict[str, float]:
+    def calculate_totals(
+        self,
+        meal: Mapping[str, float],
+    ) -> dict[str, float]:
         "Calculate total nutrition and cost for a candidate meal."
         if not meal:
             raise ValueError("Meal cannot be empty.")
@@ -180,21 +197,20 @@ class NutritionConstraintEvaluator:
 
             food = foods_by_id.loc[food_item_id]
 
-            totals["calories"] += (float(food["calories_per_serving"]) * servings)
-            totals["protein_g"] += (float(food["protein_g_per_serving"]) * servings)
-            totals["carbs_g"] += (float(food["carbs_g_per_serving"]) * servings)
-            totals["fat_g"] += (float(food["fat_g_per_serving"]) * servings)
-            totals["sodium_mg"] += (float(food["sodium_mg_per_serving"]) * servings)
-            totals["sugar_g"] += (float(food["sugar_g_per_serving"]) * servings)
-            totals["cost"] += (float(food["cost_per_serving"]) * servings)
+            totals["calories"] += float(food["calories_per_serving"]) * servings
+            totals["protein_g"] += float(food["protein_g_per_serving"]) * servings
+            totals["carbs_g"] += float(food["carbs_g_per_serving"]) * servings
+            totals["fat_g"] += float(food["fat_g_per_serving"]) * servings
+            totals["sodium_mg"] += float(food["sodium_mg_per_serving"]) * servings
+            totals["sugar_g"] += float(food["sugar_g_per_serving"]) * servings
+            totals["cost"] += float(food["cost_per_serving"]) * servings
 
-        return {
-            name: round(value, 2)
-            for name, value in totals.items()
-        }
+        return {name: round(value, 2) for name, value in totals.items()}
 
-
-    def _prepare_food_data(self, food_data: pd.DataFrame,) -> pd.DataFrame:
+    def _prepare_food_data(
+        self,
+        food_data: pd.DataFrame,
+    ) -> pd.DataFrame:
         "Validate and normalize the nutrition DataFrame."
         foods = food_data.copy()
 
@@ -221,14 +237,19 @@ class NutritionConstraintEvaluator:
         ]
 
         for column in nutrition_columns:
-            foods[column] = pd.to_numeric(foods[column], errors="raise",)
+            foods[column] = pd.to_numeric(
+                foods[column],
+                errors="raise",
+            )
             if (foods[column] < 0).any():
                 raise ValueError(f"Column '{column}' cannot contain negative values.")
-        foods["food_item_id"] = (foods["food_item_id"].astype(str).str.strip())
+        foods["food_item_id"] = foods["food_item_id"].astype(str).str.strip()
         return foods.reset_index(drop=True)
 
-
-    def _prepare_weights(self, weights: Mapping[str, float] | None,) -> dict[str, float]:
+    def _prepare_weights(
+        self,
+        weights: Mapping[str, float] | None,
+    ) -> dict[str, float]:
         selected_weights = dict(weights if weights is not None else self.DEFAULT_WEIGHTS)
         required = {"calories", "protein", "carbs", "fat"}
         missing = required - set(selected_weights)
@@ -244,9 +265,11 @@ class NutritionConstraintEvaluator:
 
         return selected_weights
 
-
     @staticmethod
-    def _closeness_score(actual: float, target: float,) -> float:
+    def _closeness_score(
+        actual: float,
+        target: float,
+    ) -> float:
         """
         Score closeness to an exact target from 0 to 100.
 
@@ -265,7 +288,6 @@ class NutritionConstraintEvaluator:
         relative_error = abs(actual - target) / target
         return round(max(0.0, 100.0 * (1.0 - relative_error)), 2)
 
-
     @staticmethod
     def _minimum_goal_score(actual: float, goal: float) -> float:
         "Score a minimum goal where exceeding the goal is not penalized."
@@ -274,9 +296,11 @@ class NutritionConstraintEvaluator:
 
         return round(max(0.0, 100.0 * actual / goal), 2)
 
-
     @staticmethod
-    def _maximum_limit_score(actual: float, maximum: float,) -> float:
+    def _maximum_limit_score(
+        actual: float,
+        maximum: float,
+    ) -> float:
         """
         Score a maximum constraint where lower values are preferred.
 
@@ -289,14 +313,24 @@ class NutritionConstraintEvaluator:
         score = 100.0 - 50.0 * (actual / maximum)
         return round(max(0.0, score), 2)
 
-
     @staticmethod
-    def _within_tolerance(actual: float, target: float, tolerance: float = 0.10,) -> bool:
+    def _within_tolerance(
+        actual: float,
+        target: float,
+        tolerance: float = 0.10,
+    ) -> bool:
         "Return True when actual is within a percentage of target."
         return abs(actual - target) <= target * tolerance
 
-
-    def _add_optional_constraint(self, name: str, actual: float, maximum: float | None, constraint_scores: dict[str, float], constraints_met: dict[str, bool], active_weights: dict[str, float]) -> None:
+    def _add_optional_constraint(
+        self,
+        name: str,
+        actual: float,
+        maximum: float | None,
+        constraint_scores: dict[str, float],
+        constraints_met: dict[str, bool],
+        active_weights: dict[str, float],
+    ) -> None:
         "Add an optional maximum constraint when the user supplied one."
         if maximum is None:
             return
@@ -306,9 +340,11 @@ class NutritionConstraintEvaluator:
         # Give each optional constraint a moderate weight.
         active_weights[name] = 0.10
 
-
     @staticmethod
-    def _weighted_average(scores: Mapping[str, float], weights: Mapping[str, float],) -> float:
+    def _weighted_average(
+        scores: Mapping[str, float],
+        weights: Mapping[str, float],
+    ) -> float:
         total_weight = sum(weights[name] for name in scores)
         if total_weight == 0:
             raise ValueError("Total scoring weight cannot be zero.")

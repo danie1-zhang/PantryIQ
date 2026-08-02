@@ -40,39 +40,25 @@ def calculate_totals(selected_foods: pd.DataFrame) -> dict[str, float]:
 
 def rank_by_protein_per_calorie(foods: pd.DataFrame) -> pd.DataFrame:
     protein_ranked = foods.copy()
-    protein_ranked["protein_per_calorie"] = (
-        protein_ranked["protein"] / protein_ranked["calories"]
-    )
+    protein_ranked["protein_per_calorie"] = protein_ranked["protein"] / protein_ranked["calories"]
     return protein_ranked.sort_values("protein_per_calorie", ascending=False)
 
 
 def rank_by_protein_per_dollar(foods: pd.DataFrame) -> pd.DataFrame:
     protein_ranked = foods.copy()
-    protein_ranked["protein_per_dollar"] = (
-        protein_ranked["protein"] / protein_ranked["cost_usd"]
-    )
+    protein_ranked["protein_per_dollar"] = protein_ranked["protein"] / protein_ranked["cost_usd"]
     return protein_ranked.sort_values("protein_per_dollar", ascending=False)
 
 
 if __name__ == "__main__":
-    foods_df = load_foods(
-        "/Users/kyle/Projects/nutrition-optimizer/data/sample/foods_sample.csv"
-    )
+    foods_df = load_foods("/Users/kyle/Projects/nutrition-optimizer/data/sample/foods_sample.csv")
 
     print("foods ranked by protein per calorie")
-    print(
-        rank_by_protein_per_calorie(foods_df)[
-            ["food_name", "protein_per_calorie"]
-        ].head()
-    )
+    print(rank_by_protein_per_calorie(foods_df)[["food_name", "protein_per_calorie"]].head())
 
     print("foods ranked by protein per dollar")
-    print(
-        rank_by_protein_per_dollar(foods_df)[["food_name", "protein_per_dollar"]].head()
-    )
+    print(rank_by_protein_per_dollar(foods_df)[["food_name", "protein_per_dollar"]].head())
 
-    selected = foods_df[
-        foods_df["food_name"].isin(["Greek yogurt", "Chicken breast", "Eggs"])
-    ]
+    selected = foods_df[foods_df["food_name"].isin(["Greek yogurt", "Chicken breast", "Eggs"])]
     print("\nExample meal totals: ")
     print(calculate_totals(selected))

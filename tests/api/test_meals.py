@@ -4,9 +4,9 @@ from uuid import uuid4
 
 import pandas as pd
 
-from optimizer.best_meal import OptimizerResult
-from optimizer.nutrition_constraints import MealEvaluation
 from src.database.models import MealLog, MealLogItem, PantryItem, User
+from src.optimizer.best_meal import OptimizerResult
+from src.optimizer.nutrition_constraints import MealEvaluation
 from src.services import meal_service
 
 

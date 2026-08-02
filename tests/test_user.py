@@ -1,7 +1,7 @@
 from __future__ import annotations
 import pandas as pd
 import pytest
-from database.user import User
+from src.legacy.user import User
 
 
 @pytest.fixture
@@ -30,7 +30,9 @@ def test_accept_meal_deducts_servings(user: User, monkeypatch) -> None:
 def test_accept_meal_updates_max_servings(user: User, monkeypatch) -> None:
     monkeypatch.setattr(user, "save_pantry", lambda: None)
     user.accept_meal({"chicken": 2})
-    row = user.pantry.pantry_items.loc[user.pantry.pantry_items["food_item_id"] == "chicken"].iloc[0]
+    row = user.pantry.pantry_items.loc[user.pantry.pantry_items["food_item_id"] == "chicken"].iloc[
+        0
+    ]
     assert row["servings"] == pytest.approx(1)
     assert row["max_servings"] == pytest.approx(1)
 
@@ -38,7 +40,9 @@ def test_accept_meal_updates_max_servings(user: User, monkeypatch) -> None:
 def test_accept_meal_marks_depleted_food_unavailable(user: User, monkeypatch) -> None:
     monkeypatch.setattr(user, "save_pantry", lambda: None)
     user.accept_meal({"broccoli": 2})
-    row = user.pantry.pantry_items.loc[user.pantry.pantry_items["food_item_id"] == "broccoli"].iloc[0]
+    row = user.pantry.pantry_items.loc[user.pantry.pantry_items["food_item_id"] == "broccoli"].iloc[
+        0
+    ]
     assert row["servings"] == pytest.approx(0)
     assert bool(row["is_available"]) is False
     assert "Broccoli" not in user.pantry.available_items()
@@ -57,7 +61,9 @@ def test_accept_meal_rejects_unknown_food_without_mutation(user: User, monkeypat
     pd.testing.assert_frame_equal(before, user.pantry.pantry_items)
 
 
-def test_accept_meal_rejects_insufficient_servings_without_mutation(user: User, monkeypatch) -> None:
+def test_accept_meal_rejects_insufficient_servings_without_mutation(
+    user: User, monkeypatch
+) -> None:
     monkeypatch.setattr(user, "save_pantry", lambda: None)
     before = user.pantry.pantry_items.copy(deep=True)
     with pytest.raises(ValueError, match="only 3"):
@@ -78,14 +84,14 @@ def test_prompt_meal_constraints(user: User, monkeypatch) -> None:
     responses = iter(
         [
             "700",  # calories
-            "50",   # protein
-            "80",   # carbs
-            "20",   # fat
-            "y",    # sodium constraint?
+            "50",  # protein
+            "80",  # carbs
+            "20",  # fat
+            "y",  # sodium constraint?
             "900",  # sodium maximum
-            "n",    # sugar constraint?
-            "y",    # cost constraint?
-            "8",    # cost maximum
+            "n",  # sugar constraint?
+            "y",  # cost constraint?
+            "8",  # cost maximum
         ]
     )
 
@@ -101,7 +107,8 @@ def test_prompt_meal_constraints(user: User, monkeypatch) -> None:
 
 
 def test_view_available_items_handles_empty_pantry(food_catalog_df: pd.DataFrame, capsys) -> None:
-    from database.pantry import Pantry
+    from src.legacy.pantry import Pantry
+
     empty_pantry = Pantry(food_catalog=food_catalog_df)
     user = User(name="Test User", age=20, height_inches=71, weight_pounds=160, pantry=empty_pantry)
     user.view_available_items()

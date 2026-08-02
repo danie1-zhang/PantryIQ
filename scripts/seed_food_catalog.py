@@ -1,4 +1,5 @@
 """Import data/food_catalog.csv into the foods table."""
+
 from __future__ import annotations
 
 import argparse
@@ -17,7 +18,6 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.database.models import Food  # noqa: E402
 from src.database.session import SessionLocal  # noqa: E402
-
 
 DEFAULT_CATALOG = PROJECT_ROOT / "data" / "food_catalog.csv"
 SERVING_PATTERN = re.compile(r"^\s*(\d+(?:\.\d+)?)\s+(.+?)\s*$")

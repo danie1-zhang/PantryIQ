@@ -1,14 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.api.exception_handlers import register_exception_handlers
 from src.api.routes import foods, health, meals, pantry, users
+from src.app.settings import get_settings
 
 API_PREFIX = "/api/v1"
 
 app = FastAPI(title="Nutrition Optimizer API", version="0.1.0")
+register_exception_handlers(app)
+settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

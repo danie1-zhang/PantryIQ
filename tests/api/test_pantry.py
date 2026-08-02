@@ -1,6 +1,14 @@
 import uuid
+from concurrent.futures import ThreadPoolExecutor
+from decimal import Decimal
+from threading import Barrier
+
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, sessionmaker
 
 from src.database.models import Food, PantryItem, User
+from src.schemas.pantry import PantryItemCreate
+from src.services.pantry_service import add_to_pantry
 
 
 def pantry_payload(food_id, servings=4, maximum=2):
@@ -21,6 +29,45 @@ def test_add_and_upsert_pantry_item(client, api_user, food_factory, api_session)
     assert updated.status_code == 200
     assert updated.json()["servings_available"] == 5
     assert api_session.query(PantryItem).count() == 1
+
+
+def test_concurrent_first_additions_create_one_pantry_row(
+    api_user,
+    food_factory,
+    test_session_factory: sessionmaker[Session],
+) -> None:
+    food = food_factory(name="Concurrent Food")
+    barrier = Barrier(2)
+
+    def add_once() -> None:
+        with test_session_factory() as session:
+            user = session.get(User, api_user.id)
+            original_scalar = session.scalar
+            scalar_calls = 0
+
+            def synchronized_scalar(statement, *args, **kwargs):
+                nonlocal scalar_calls
+                result = original_scalar(statement, *args, **kwargs)
+                scalar_calls += 1
+                if scalar_calls == 1:
+                    barrier.wait(timeout=5)
+                return result
+
+            session.scalar = synchronized_scalar
+            add_to_pantry(
+                session,
+                user,
+                PantryItemCreate(food_id=food.id, servings_available=Decimal("1")),
+            )
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        list(executor.map(lambda _: add_once(), range(2)))
+
+    with test_session_factory() as session:
+        count = session.scalar(select(func.count()).select_from(PantryItem))
+        item = session.scalar(select(PantryItem))
+        assert count == 1
+        assert item.servings_available == Decimal("2")
 
 
 def test_get_pantry_is_user_scoped(client, api_user, food_factory, api_session) -> None:

@@ -1,10 +1,10 @@
 from uuid import UUID
 
-from fastapi import HTTPException, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from src.database.models import Food
+from src.services.exceptions import ResourceNotFoundError
 
 
 def search_foods(
@@ -23,5 +23,5 @@ def search_foods(
 def get_food(session: Session, food_id: UUID) -> Food:
     food = session.get(Food, food_id)
     if food is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Food not found")
+        raise ResourceNotFoundError("Food not found")
     return food

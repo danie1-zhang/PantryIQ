@@ -1,15 +1,17 @@
 from __future__ import annotations
 import re
 from pathlib import Path
-from database.pantry import Pantry
-from optimizer.best_meal import MealOptimizer, OptimizerResult
-from optimizer.nutrition_constraints import NutritionConstraints
+from src.legacy.pantry import Pantry
+from src.optimizer.best_meal import MealOptimizer, OptimizerResult
+from src.optimizer.nutrition_constraints import NutritionConstraints
 
 
 class User:
     "Represent a user and coordinate their pantry and meal optimizer."
 
-    def __init__(self, name: str, age: int, height_inches: float, weight_pounds: float, pantry: Pantry) -> None:
+    def __init__(
+        self, name: str, age: int, height_inches: float, weight_pounds: float, pantry: Pantry
+    ) -> None:
         if not name.strip():
             raise ValueError("User name cannot be empty.")
 
@@ -28,36 +30,71 @@ class User:
         self.weight_pounds = weight_pounds
         self.pantry = pantry
 
-
     @classmethod
-    def create_new(cls, *,name: str, age: int, height_inches: float, weight_pounds: float, food_catalog_path: str | Path, pantry_path: str | Path | None = None) -> User:
+    def create_new(
+        cls,
+        *,
+        name: str,
+        age: int,
+        height_inches: float,
+        weight_pounds: float,
+        food_catalog_path: str | Path,
+        pantry_path: str | Path | None = None,
+    ) -> User:
         "Create a new user with an empty pantry."
         if pantry_path is None:
             pantry_path = cls._default_pantry_path(name)
         pantry = Pantry.empty(food_catalog_path=food_catalog_path, pantry_path=pantry_path)
-        return cls(name=name, age=age, height_inches=height_inches, weight_pounds=weight_pounds, pantry=pantry)
-
+        return cls(
+            name=name,
+            age=age,
+            height_inches=height_inches,
+            weight_pounds=weight_pounds,
+            pantry=pantry,
+        )
 
     @classmethod
-    def from_existing_pantry(cls, *, name: str, age: int, height_inches: float, weight_pounds: float, pantry_path: str | Path, food_catalog_path: str | Path,) -> User:
+    def from_existing_pantry(
+        cls,
+        *,
+        name: str,
+        age: int,
+        height_inches: float,
+        weight_pounds: float,
+        pantry_path: str | Path,
+        food_catalog_path: str | Path,
+    ) -> User:
         "Create a user by loading an existing pantry CSV."
         pantry = Pantry.from_csv(
             pantry_path=pantry_path,
             food_catalog_path=food_catalog_path,
         )
-        return cls(name=name, age=age, height_inches=height_inches, weight_pounds=weight_pounds, pantry=pantry,)
-
+        return cls(
+            name=name,
+            age=age,
+            height_inches=height_inches,
+            weight_pounds=weight_pounds,
+            pantry=pantry,
+        )
 
     @classmethod
-    def create_interactively(cls, food_catalog_path: str | Path,) -> User:
+    def create_interactively(
+        cls,
+        food_catalog_path: str | Path,
+    ) -> User:
         "Prompt for basic information and create a new user."
         print("\nCreate your nutrition profile")
         name = cls._prompt_nonempty_string("Name: ")
         age = cls._prompt_positive_int("Age: ")
         height_inches = cls._prompt_positive_float("Height in inches: ")
         weight_pounds = cls._prompt_positive_float("Weight in pounds: ")
-        return cls.create_new(name=name, age=age, height_inches=height_inches, weight_pounds=weight_pounds, food_catalog_path=food_catalog_path,)
-
+        return cls.create_new(
+            name=name,
+            age=age,
+            height_inches=height_inches,
+            weight_pounds=weight_pounds,
+            food_catalog_path=food_catalog_path,
+        )
 
     def run(self) -> None:
         "Run the V1 command-line user menu."
@@ -83,13 +120,11 @@ class User:
             else:
                 print("Please select a number from 1 through 6.")
 
-
     def add_foods(self) -> None:
         "Use the Pantry input workflow to add one or more foods."
         self.pantry.input_foods()
         if self._prompt_yes_no("Save pantry changes now? (y/n): "):
             self.save_pantry()
-
 
     def view_available_items(self) -> None:
         "Display available pantry items and quantities."
@@ -104,7 +139,7 @@ class User:
             "max_servings",
             "category",
             "calories_per_serving",
-            "protein_g_per_serving"
+            "protein_g_per_serving",
         ]
 
         optional_columns = [
@@ -112,7 +147,7 @@ class User:
             "fat_g_per_serving",
             "sugar_g_per_serving",
             "sodium_mg_per_serving",
-            "cost_per_serving"
+            "cost_per_serving",
         ]
 
         display_columns.extend(column for column in optional_columns if column in available.columns)
@@ -128,8 +163,12 @@ class User:
             return None
 
         constraints = self._prompt_meal_constraints()
-        number_of_candidates = self._prompt_positive_int("How many candidate meals should be generated? [Recommended: 10000]: ", default=10_000)
-        optimizer = MealOptimizer(pantry_foods=available_foods, constraints=constraints, random_seed=42)
+        number_of_candidates = self._prompt_positive_int(
+            "How many candidate meals should be generated? [Recommended: 10000]: ", default=10_000
+        )
+        optimizer = MealOptimizer(
+            pantry_foods=available_foods, constraints=constraints, random_seed=42
+        )
 
         try:
             result = optimizer.find_best_meal(number_of_candidates=number_of_candidates)
@@ -144,8 +183,10 @@ class User:
             print("Meal was not accepted. Pantry quantities were unchanged.")
         return result
 
-
-    def accept_meal(self, meal: dict[str, float],) -> None:
+    def accept_meal(
+        self,
+        meal: dict[str, float],
+    ) -> None:
         "Deduct an accepted meal's servings from the pantry."
         if not meal:
             raise ValueError("Cannot accept an empty meal.")
@@ -154,7 +195,9 @@ class User:
 
         # Validate every item before changing any quantities.
         for food_item_id, servings_used in meal.items():
-            matching_rows = pantry_items[pantry_items["food_item_id"].astype(str) == str(food_item_id)]
+            matching_rows = pantry_items[
+                pantry_items["food_item_id"].astype(str) == str(food_item_id)
+            ]
             if matching_rows.empty:
                 raise ValueError(f"Food '{food_item_id}' is no longer in the pantry.")
 
@@ -165,11 +208,13 @@ class User:
                 raise ValueError(f"Meal contains an invalid serving amount for {food_item_id}'.")
 
             if servings_used > available_servings:
-                raise ValueError(f"Meal requires {servings_used:g} servings of {food_item_id}', but only {available_servings:g} are available.")
+                raise ValueError(
+                    f"Meal requires {servings_used:g} servings of {food_item_id}', but only {available_servings:g} are available."
+                )
 
         # All items are valid, so it is now safe to mutate the pantry.
         for food_item_id, servings_used in meal.items():
-            matching_mask = (pantry_items["food_item_id"].astype(str) == str(food_item_id))
+            matching_mask = pantry_items["food_item_id"].astype(str) == str(food_item_id)
             row_index = pantry_items.index[matching_mask][0]
             current_servings = float(pantry_items.at[row_index, "servings"])
             remaining_servings = round(current_servings - servings_used, 2)
@@ -185,7 +230,6 @@ class User:
         print("\nMeal accepted.")
         print("Consumed servings were deducted from your pantry.")
 
-
     def save_pantry(self) -> None:
         "Save the user's pantry to its configured CSV path."
         try:
@@ -194,7 +238,6 @@ class User:
             print(f"Could not save pantry: {exc}")
             return
         print(f"Pantry saved to: {saved_path}")
-
 
     def view_profile(self) -> None:
         "Display basic personal information."
@@ -206,7 +249,6 @@ class User:
         print(f"Height: {feet}'{inches:g}\"")
         print(f"Weight: {self.weight_pounds:g} pounds")
         print(f"Unique pantry items: {self.pantry.number_of_unique_items()}")
-
 
     def _prompt_meal_constraints(self) -> NutritionConstraints:
         "Collect required and optional meal constraints."
@@ -229,26 +271,36 @@ class User:
             cost_max=cost_max,
         )
 
-
     @classmethod
-    def _prompt_optional_constraint(cls, name: str, unit: str,) -> float | None:
-        use_constraint = cls._prompt_yes_no(f"Would you like to set a maximum {name} constraint? (y/n): ")
+    def _prompt_optional_constraint(
+        cls,
+        name: str,
+        unit: str,
+    ) -> float | None:
+        use_constraint = cls._prompt_yes_no(
+            f"Would you like to set a maximum {name} constraint? (y/n): "
+        )
         if not use_constraint:
             return None
         return cls._prompt_nonnegative_float(f"Maximum {name} in {unit}: ")
-        
 
-    def _display_meal_result(self, result: OptimizerResult,) -> None:
+    def _display_meal_result(
+        self,
+        result: OptimizerResult,
+    ) -> None:
         "Display the selected meal and its evaluation."
         evaluation = result.evaluation
-        status = ("FEASIBLE MEAL FOUND" if evaluation.is_feasible else "NO FULLY FEASIBLE MEAL FOUND")
+        status = "FEASIBLE MEAL FOUND" if evaluation.is_feasible else "NO FULLY FEASIBLE MEAL FOUND"
         food_name_lookup = self._food_name_lookup()
 
         print(f"\n{status}")
         print("\nSelected meal:")
 
         for food_item_id, servings in result.meal.items():
-            food_name = food_name_lookup.get(str(food_item_id), str(food_item_id),)
+            food_name = food_name_lookup.get(
+                str(food_item_id),
+                str(food_item_id),
+            )
             print(f"- {food_name}: {servings:g} serving(s)")
 
         totals = evaluation.totals
@@ -266,18 +318,26 @@ class User:
             marker = "met" if was_met else "not met"
             print(f"- {name.title()}: {marker}")
 
-        print(f"\nGenerated {result.candidates_generated:,} candidates; evaluated {result.valid_candidates_evaluated:,} structurally valid candidates.")
+        print(
+            f"\nGenerated {result.candidates_generated:,} candidates; evaluated {result.valid_candidates_evaluated:,} structurally valid candidates."
+        )
         if not evaluation.is_feasible:
-            print("\nDisclaimer: No fully feasible meal was found. This is the highest-scoring near-feasible candidate found by the V1 randomized optimizer.")
+            print(
+                "\nDisclaimer: No fully feasible meal was found. This is the highest-scoring near-feasible candidate found by the V1 randomized optimizer."
+            )
         else:
-            print("\nDisclaimer: This is the best meal found by the V1 randomized search, not a guaranteed global optimum.")
-
+            print(
+                "\nDisclaimer: This is the best meal found by the V1 randomized search, not a guaranteed global optimum."
+            )
 
     def _food_name_lookup(self) -> dict[str, str]:
         available = self.pantry.available_items_df()
         return dict(
-            zip(available["food_item_id"].astype(str), available["food_nm"].astype(str),))
-
+            zip(
+                available["food_item_id"].astype(str),
+                available["food_nm"].astype(str),
+            )
+        )
 
     @staticmethod
     def _display_actions() -> None:
@@ -289,16 +349,16 @@ class User:
         print("5. Save pantry")
         print("6. Save and exit")
 
-
     @staticmethod
     def _default_pantry_path(name: str) -> Path:
         """Create a safe default pantry filename from the user's name."""
-        safe_name = re.sub(pattern=r"[^a-zA-Z0-9_-]+", repl="_", string=name.strip().lower()).strip("_")
+        safe_name = re.sub(pattern=r"[^a-zA-Z0-9_-]+", repl="_", string=name.strip().lower()).strip(
+            "_"
+        )
         if not safe_name:
             safe_name = "user"
         project_root = Path(__file__).resolve().parents[2]
-        return (project_root/"data"/"pantries"/ f"{safe_name}_pantry.csv")
-        
+        return project_root / "data" / "pantries" / f"{safe_name}_pantry.csv"
 
     @staticmethod
     def _prompt_nonempty_string(prompt: str) -> str:
@@ -307,7 +367,6 @@ class User:
             if value:
                 return value
             print("This value cannot be empty.")
-
 
     @staticmethod
     def _prompt_positive_float(prompt: str) -> float:
@@ -323,7 +382,6 @@ class User:
                 continue
             return value
 
-
     @staticmethod
     def _prompt_nonnegative_float(prompt: str) -> float:
         while True:
@@ -338,9 +396,11 @@ class User:
                 continue
             return value
 
-
     @staticmethod
-    def _prompt_positive_int(prompt: str, default: int | None = None,) -> int:
+    def _prompt_positive_int(
+        prompt: str,
+        default: int | None = None,
+    ) -> int:
         while True:
             raw_value = input(prompt).strip()
             if not raw_value and default is not None:
@@ -354,7 +414,6 @@ class User:
                 print("Please enter a number greater than zero.")
                 continue
             return value
-
 
     @staticmethod
     def _prompt_yes_no(prompt: str) -> bool:

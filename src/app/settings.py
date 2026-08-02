@@ -1,9 +1,8 @@
 from functools import lru_cache
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from pydantic import Field, field_validator, model_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 Environment = Literal["development", "test", "staging", "production"]
 POSTGRESQL_SCHEMES = ("postgresql://", "postgresql+psycopg://")
@@ -14,6 +13,9 @@ class Settings(BaseSettings):
 
     environment: Environment = "development"
     database_url: str
+    cors_origins: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: ["http://localhost:5173"]
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -26,6 +28,13 @@ class Settings(BaseSettings):
     def validate_database_url(cls, value: str) -> str:
         if not value.startswith(POSTGRESQL_SCHEMES):
             raise ValueError("DATABASE_URL must be a PostgreSQL connection URL")
+        return value
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, value: object) -> object:
+        if isinstance(value, str):
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
 
     @model_validator(mode="after")

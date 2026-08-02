@@ -3,7 +3,6 @@ from decimal import Decimal
 from uuid import UUID
 
 import pandas as pd
-from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
@@ -17,6 +16,7 @@ from src.schemas.meal import (
     MealGenerateResponse,
     NutritionTotals,
 )
+from src.services.exceptions import BusinessRuleError, ConflictError, ResourceNotFoundError
 
 
 def available_pantry_statement(user: User):
@@ -61,7 +61,7 @@ def generate_meal(
 ) -> MealGenerateResponse:
     pantry_items = list(session.scalars(available_pantry_statement(user)))
     if not pantry_items:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Pantry is empty")
+        raise BusinessRuleError("Pantry is empty")
 
     frame = pantry_to_optimizer_frame(pantry_items)
     constraints = NutritionConstraints(
@@ -76,7 +76,7 @@ def generate_meal(
     try:
         result = MealOptimizer(frame, constraints).find_best_meal(request.number_of_candidates)
     except (ValueError, RuntimeError) as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        raise BusinessRuleError(str(exc)) from exc
 
     foods = {str(item.food_id): item.food for item in pantry_items}
     evaluation = result.evaluation
@@ -115,9 +115,7 @@ def accept_meal(session: Session, user: User, request: MealAcceptRequest) -> Mea
     )
     pantry_by_food = {item.food_id: item for item in pantry_items}
     if len(pantry_by_food) != len(food_ids):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Food not found in pantry"
-        )
+        raise ResourceNotFoundError("Food not found in pantry")
 
     totals = {
         name: Decimal("0")
@@ -126,9 +124,7 @@ def accept_meal(session: Session, user: User, request: MealAcceptRequest) -> Mea
     for requested in request.items:
         pantry_item = pantry_by_food[requested.food_id]
         if not pantry_item.is_available or requested.servings > pantry_item.servings_available:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Insufficient pantry servings"
-            )
+            raise ConflictError("Insufficient pantry servings")
         food = pantry_item.food
         for name in totals:
             totals[name] += getattr(food, name) * requested.servings
@@ -187,5 +183,5 @@ def get_meal(session: Session, user: User, meal_id: UUID) -> MealLog:
         .where(MealLog.id == meal_id, MealLog.user_id == user.id)
     )
     if meal is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal not found")
+        raise ResourceNotFoundError("Meal not found")
     return meal

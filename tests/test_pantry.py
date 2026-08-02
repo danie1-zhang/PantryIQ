@@ -1,11 +1,13 @@
 from __future__ import annotations
 import pandas as pd
 import pytest
-from database.pantry import Pantry
+from src.legacy.pantry import Pantry
 
 
 def test_empty_pantry_has_no_items(food_catalog_df: pd.DataFrame) -> None:
-    pantry = Pantry(food_catalog=food_catalog_df,)
+    pantry = Pantry(
+        food_catalog=food_catalog_df,
+    )
     assert pantry.pantry_items.empty
     assert pantry.available_items() == []
     assert pantry.number_of_unique_items() == 0
@@ -30,7 +32,11 @@ def test_add_food_adds_valid_catalog_food(food_catalog_df: pd.DataFrame) -> None
 
 def test_add_food_can_find_food_by_name(food_catalog_df: pd.DataFrame) -> None:
     pantry = Pantry(food_catalog=food_catalog_df)
-    pantry.add_food(food_query="white rice", servings=2, max_servings=1,)
+    pantry.add_food(
+        food_query="white rice",
+        servings=2,
+        max_servings=1,
+    )
     assert pantry.available_items() == ["White Rice"]
 
 
@@ -54,7 +60,10 @@ def test_add_food_rejects_nonpositive_servings(food_catalog_df: pd.DataFrame) ->
 
 def test_max_servings_cannot_exceed_available_servings(food_catalog_df: pd.DataFrame) -> None:
     pantry = Pantry(food_catalog=food_catalog_df)
-    with pytest.raises(ValueError, match="max_servings cannot exceed",):
+    with pytest.raises(
+        ValueError,
+        match="max_servings cannot exceed",
+    ):
         pantry.add_food(food_query="chicken", servings=1, max_servings=2)
 
 
@@ -68,14 +77,18 @@ def test_adding_existing_food_increases_quantity(food_catalog_df: pd.DataFrame) 
     assert row["max_servings"] == pytest.approx(2)
 
 
-def test_available_items_excludes_unavailable_foods(food_catalog_df: pd.DataFrame, pantry_df: pd.DataFrame) -> None:
+def test_available_items_excludes_unavailable_foods(
+    food_catalog_df: pd.DataFrame, pantry_df: pd.DataFrame
+) -> None:
     pantry_df.loc[pantry_df["food_item_id"] == "chicken", "is_available"] = False
     pantry = Pantry(food_catalog=food_catalog_df, pantry_items=pantry_df)
     assert "Chicken Breast" not in pantry.available_items()
     assert "White Rice" in pantry.available_items()
 
 
-def test_available_items_excludes_zero_serving_foods(food_catalog_df: pd.DataFrame, pantry_df: pd.DataFrame) -> None:
+def test_available_items_excludes_zero_serving_foods(
+    food_catalog_df: pd.DataFrame, pantry_df: pd.DataFrame
+) -> None:
     pantry_df.loc[pantry_df["food_item_id"] == "chicken", "servings"] = 0
     pantry_df.loc[pantry_df["food_item_id"] == "chicken", "max_servings"] = 0
     pantry = Pantry(food_catalog=food_catalog_df, pantry_items=pantry_df)
@@ -100,11 +113,17 @@ def test_number_of_unique_items_counts_food_ids(pantry: Pantry) -> None:
     assert pantry.number_of_unique_items() == 5
 
 
-def test_pantry_csv_round_trip(tmp_path, food_catalog_df: pd.DataFrame, pantry_df: pd.DataFrame) -> None:
+def test_pantry_csv_round_trip(
+    tmp_path, food_catalog_df: pd.DataFrame, pantry_df: pd.DataFrame
+) -> None:
     catalog_path = tmp_path / "food_catalog.csv"
     pantry_path = tmp_path / "test_pantry.csv"
     food_catalog_df.to_csv(catalog_path, index=False)
     original = Pantry(food_catalog=food_catalog_df, pantry_items=pantry_df, pantry_path=pantry_path)
     original.save()
     loaded = Pantry.from_csv(pantry_path=pantry_path, food_catalog_path=catalog_path)
-    pd.testing.assert_frame_equal(original.pantry_items.reset_index(drop=True), loaded.pantry_items.reset_index(drop=True), check_dtype=False)
+    pd.testing.assert_frame_equal(
+        original.pantry_items.reset_index(drop=True),
+        loaded.pantry_items.reset_index(drop=True),
+        check_dtype=False,
+    )
