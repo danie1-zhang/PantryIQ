@@ -59,6 +59,10 @@ def generate_meal(
             method=request.optimization_method,
             time_limit_seconds=request.time_limit_seconds,
             number_of_candidates=request.number_of_candidates,
+            excluded_meals=[
+                {str(item.food_id): float(item.servings) for item in meal.items}
+                for meal in request.excluded_meals
+            ],
         )
     except OptimizationTimeoutError as exc:
         raise ConflictError(str(exc)) from exc

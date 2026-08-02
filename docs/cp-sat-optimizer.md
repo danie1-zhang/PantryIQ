@@ -70,6 +70,8 @@ Meal acceptance is unchanged. The browser sends only food IDs, servings, rating,
 
 ## Limitations
 
-The optimizer is only optimal for the rules and half-serving choices represented by the model. Mathematical optimality does not guarantee taste, culinary compatibility, preparation convenience, or personal preference. Variety can be added later through exclusion constraints or controlled preference changes rather than hidden randomness.
+The optimizer is only optimal for the rules and half-serving choices represented by the model. Mathematical optimality does not guarantee taste, culinary compatibility, preparation convenience, or personal preference.
+
+The Generate Another flow sends up to 20 recommendations from the current page session back as exclusions. CP-SAT adds an exact no-good constraint for each food-and-serving combination, and the random baseline skips matching candidates. This prevents an exact repeat while another structurally valid meal exists. The exclusions are not stored, so they reset when the page reloads; persistent variety would require an approved history or preference design.
 
 The current `Food` table has no `is_active` column, so referenced catalog foods are treated as active. No database migration was needed for this optimizer.

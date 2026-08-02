@@ -80,6 +80,11 @@ export interface MealConstraints {
   number_of_candidates?: number;
   optimization_method?: "cp_sat" | "random";
   time_limit_seconds?: number;
+  excluded_meals?: MealExclusion[];
+}
+
+export interface MealExclusion {
+  items: Array<{ food_id: string; servings: number }>;
 }
 
 export interface NutritionTotals {

@@ -11,6 +11,29 @@ PositiveGoal = Annotated[Decimal, Field(gt=0)]
 NonnegativeMaximum = Annotated[Decimal, Field(ge=0)]
 
 
+class ExcludedMealItem(BaseModel):
+    food_id: UUID
+    servings: Annotated[Decimal, Field(gt=0, max_digits=10, decimal_places=1)]
+
+    @field_validator("servings")
+    @classmethod
+    def require_half_servings(cls, value: Decimal) -> Decimal:
+        if value * 2 != (value * 2).to_integral_value():
+            raise ValueError("excluded meal servings must use half-serving increments")
+        return value
+
+
+class ExcludedMeal(BaseModel):
+    items: Annotated[list[ExcludedMealItem], Field(min_length=1)]
+
+    @model_validator(mode="after")
+    def require_unique_foods(self) -> "ExcludedMeal":
+        food_ids = [item.food_id for item in self.items]
+        if len(food_ids) != len(set(food_ids)):
+            raise ValueError("food IDs must be unique within an excluded meal")
+        return self
+
+
 class MealGenerateRequest(BaseModel):
     calorie_goal: PositiveGoal
     protein_goal: PositiveGoal
@@ -22,6 +45,9 @@ class MealGenerateRequest(BaseModel):
     number_of_candidates: Annotated[int, Field(ge=1, le=100_000)] = 10_000
     optimization_method: Literal["cp_sat", "random"] = "cp_sat"
     time_limit_seconds: Annotated[float, Field(ge=0.1, le=10)] = 2.0
+    excluded_meals: Annotated[list[ExcludedMeal], Field(max_length=20)] = Field(
+        default_factory=list
+    )
 
 
 class GeneratedMealItem(BaseModel):

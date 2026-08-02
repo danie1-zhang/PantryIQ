@@ -240,6 +240,33 @@ def test_empty_eligible_pantry_is_rejected() -> None:
         CpSatMealOptimizer([unavailable], exact_constraints(), time_limit_seconds=1)
 
 
+def test_excluded_meal_is_not_generated_again() -> None:
+    first = CpSatMealOptimizer(exact_foods(), exact_constraints(), time_limit_seconds=1).solve()
+    second = CpSatMealOptimizer(
+        exact_foods(),
+        exact_constraints(),
+        time_limit_seconds=1,
+        excluded_meals=[first.meal],
+    ).solve()
+
+    assert second.meal != first.meal
+
+
+def test_random_baseline_skips_excluded_meals() -> None:
+    first = optimize_meal(
+        exact_foods(), exact_constraints(), method="random", number_of_candidates=100
+    )
+    second = optimize_meal(
+        exact_foods(),
+        exact_constraints(),
+        method="random",
+        number_of_candidates=100,
+        excluded_meals=[first.meal],
+    )
+
+    assert second.meal != first.meal
+
+
 def test_unified_service_preserves_random_baseline() -> None:
     result = optimize_meal(
         exact_foods(), exact_constraints(), method="random", number_of_candidates=20

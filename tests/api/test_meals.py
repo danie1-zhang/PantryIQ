@@ -147,6 +147,78 @@ def test_generate_validates_method_and_time_limit(client, api_user) -> None:
     )
 
 
+def test_generate_passes_validated_meal_exclusions(
+    client, api_user, food_factory, api_session, monkeypatch
+) -> None:
+    protein = food_factory(category="protein")
+    carb = food_factory(category="carbohydrate")
+    add_pantry(api_session, api_user, protein)
+    add_pantry(api_session, api_user, carb)
+    captured = {}
+
+    def fake_optimize(foods, constraints, **options):
+        captured["excluded_meals"] = options["excluded_meals"]
+        return OptimizerResult(
+            meal={str(protein.id): 1, str(carb.id): 1},
+            evaluation=MealEvaluation(
+                totals={
+                    "calories": 300,
+                    "protein_g": 30,
+                    "carbs_g": 30,
+                    "fat_g": 10,
+                    "sodium_mg": 0,
+                    "sugar_g": 0,
+                    "fiber_g": 0,
+                    "cost": 0,
+                },
+                constraint_scores={},
+                constraints_met={},
+                feasibility_score=100,
+                is_feasible=True,
+            ),
+            optimization_method="cp_sat",
+            solver_status="OPTIMAL",
+        )
+
+    monkeypatch.setattr(meal_service, "optimize_meal", fake_optimize)
+    response = client.post(
+        "/api/v1/meals/generate",
+        json=generation_payload(
+            excluded_meals=[
+                {
+                    "items": [
+                        {"food_id": str(protein.id), "servings": 1.5},
+                        {"food_id": str(carb.id), "servings": 1},
+                    ]
+                }
+            ]
+        ),
+    )
+
+    assert response.status_code == 200
+    assert captured["excluded_meals"] == [{str(protein.id): 1.5, str(carb.id): 1.0}]
+
+
+def test_generate_rejects_invalid_exclusions(client, api_user) -> None:
+    food_id = str(uuid4())
+    duplicate = generation_payload(
+        excluded_meals=[
+            {
+                "items": [
+                    {"food_id": food_id, "servings": 1},
+                    {"food_id": food_id, "servings": 1.5},
+                ]
+            }
+        ]
+    )
+    quarter_serving = generation_payload(
+        excluded_meals=[{"items": [{"food_id": food_id, "servings": 0.25}]}]
+    )
+
+    assert client.post("/api/v1/meals/generate", json=duplicate).status_code == 422
+    assert client.post("/api/v1/meals/generate", json=quarter_serving).status_code == 422
+
+
 def test_generate_and_accept_cp_sat_meal_preserves_then_deducts_inventory(
     client, api_user, food_factory, api_session
 ) -> None:

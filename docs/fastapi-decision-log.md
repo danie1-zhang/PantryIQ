@@ -141,6 +141,8 @@ New rows return `201`; ordinary updates return `200`. In an extremely narrow con
 
 OR-Tools CP-SAT is the default strategy. The request can select the original randomized optimizer as a baseline. CP-SAT uses half-serving decisions, a bounded 0.1–10 second solve time, strict nutrition constraints, and a relaxed model when strict nutrition is infeasible. The response includes the method, solver status, objective metadata, solve time, and any constraint violations.
 
+Generation requests may include up to 20 previously returned meals. The optimizer excludes those exact food-and-serving combinations without storing recommendation history. This gives the current browser session variety while keeping generation read-only.
+
 The existing nutrition evaluator independently recalculates and scores every result. Generation does not deduct inventory or persist recommendation history. Generate Another simply calls the endpoint again and may return the same deterministic optimum.
 
 # Meal acceptance

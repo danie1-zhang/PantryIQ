@@ -101,6 +101,7 @@ class CpSatMealOptimizer:
         time_limit_seconds: float = DEFAULT_TIME_LIMIT_SECONDS,
         max_unique_foods: int = DEFAULT_MAX_UNIQUE_FOODS,
         max_total_servings: Decimal = DEFAULT_MAX_TOTAL_SERVINGS,
+        excluded_meals: list[dict[str, float]] | None = None,
     ) -> None:
         self.foods = [
             food
@@ -119,6 +120,7 @@ class CpSatMealOptimizer:
         self.time_limit_seconds = time_limit_seconds
         self.max_unique_foods = max_unique_foods
         self.max_total_servings = max_total_servings
+        self.excluded_meals = excluded_meals or []
         self.evaluator = NutritionConstraintEvaluator(optimizer_foods_to_frame(self.foods))
 
     def solve(self) -> OptimizerResult:
@@ -164,6 +166,7 @@ class CpSatMealOptimizer:
         model.add(sum(selected) >= 1)
         model.add(sum(selected) <= min(self.max_unique_foods, len(self.foods)))
         model.add(sum(serving_units) <= servings_to_units(self.max_total_servings))
+        self._exclude_previous_meals(model, serving_units, maximum_units)
 
         protein_selected = [
             selected[index]
@@ -286,6 +289,39 @@ class CpSatMealOptimizer:
         objective_terms.append(sum(selected) * OBJECTIVE_WEIGHTS["food_count"])
         model.minimize(sum(objective_terms))
         return _BuiltModel(model, serving_units, totals, violations)
+
+    def _exclude_previous_meals(
+        self,
+        model: cp_model.CpModel,
+        serving_units: list[cp_model.IntVar],
+        maximum_units: list[int],
+    ) -> None:
+        """Prevent an exact repeat of each supplied food-and-serving combination."""
+
+        food_indexes = {food.food_id: index for index, food in enumerate(self.foods)}
+        for exclusion_index, excluded_meal in enumerate(self.excluded_meals):
+            if any(food_id not in food_indexes for food_id in excluded_meal):
+                continue
+            expected_units = [0] * len(self.foods)
+            for food_id, servings in excluded_meal.items():
+                expected_units[food_indexes[food_id]] = servings_to_units(servings)
+            if any(
+                expected > maximum
+                for expected, maximum in zip(expected_units, maximum_units, strict=True)
+            ):
+                continue
+
+            matches: list[cp_model.IntVar] = []
+            for food_index, (variable, expected) in enumerate(
+                zip(serving_units, expected_units, strict=True)
+            ):
+                matches_expected = model.new_bool_var(
+                    f"exclusion_{exclusion_index}_food_{food_index}_matches"
+                )
+                model.add(variable == expected).only_enforce_if(matches_expected)
+                model.add(variable != expected).only_enforce_if(matches_expected.Not())
+                matches.append(matches_expected)
+            model.add(sum(matches) <= len(matches) - 1)
 
     def _solve_model(
         self, built: _BuiltModel, *, relaxed: bool, time_limit_seconds: float

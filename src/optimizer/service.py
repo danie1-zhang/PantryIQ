@@ -14,15 +14,21 @@ def optimize_meal(
     method: OptimizationMethod = "cp_sat",
     time_limit_seconds: float = DEFAULT_TIME_LIMIT_SECONDS,
     number_of_candidates: int = 10_000,
+    excluded_meals: list[dict[str, float]] | None = None,
 ) -> OptimizerResult:
     """Run the selected optimizer and return a strategy-independent result."""
 
     if method == "cp_sat":
-        return CpSatMealOptimizer(foods, constraints, time_limit_seconds=time_limit_seconds).solve()
+        return CpSatMealOptimizer(
+            foods,
+            constraints,
+            time_limit_seconds=time_limit_seconds,
+            excluded_meals=excluded_meals,
+        ).solve()
     if method == "random":
-        random_result = MealOptimizer(optimizer_foods_to_frame(foods), constraints).find_best_meal(
-            number_of_candidates
-        )
+        random_result = MealOptimizer(
+            optimizer_foods_to_frame(foods), constraints, excluded_meals=excluded_meals
+        ).find_best_meal(number_of_candidates)
         return OptimizerResult(
             meal=random_result.meal,
             evaluation=random_result.evaluation,

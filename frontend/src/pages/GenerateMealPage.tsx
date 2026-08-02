@@ -6,7 +6,7 @@ import { useUser } from "../api/users";
 import { ErrorState, LoadingState } from "../components/AsyncState";
 import { MealConstraintsForm } from "../components/MealConstraintsForm";
 import { MealRecommendationCard } from "../components/MealRecommendationCard";
-import type { MealConstraints } from "../types/api";
+import type { MealConstraints, MealExclusion, MealRecommendation } from "../types/api";
 
 export function GenerateMealPage() {
   const profile = useUser();
@@ -14,11 +14,28 @@ export function GenerateMealPage() {
   const accept = useAcceptMeal();
   const navigate = useNavigate();
   const [lastConstraints, setLastConstraints] = useState<MealConstraints | null>(null);
+  const [excludedMeals, setExcludedMeals] = useState<MealExclusion[]>([]);
 
   function generateMeal(values: MealConstraints) {
-    setLastConstraints(values);
+    const baseConstraints = { ...values, excluded_meals: undefined };
+    setLastConstraints(baseConstraints);
+    setExcludedMeals([]);
     accept.reset();
-    generate.mutate(values);
+    generate.mutate(baseConstraints, {
+      onSuccess: (meal) => setExcludedMeals([toExclusion(meal)]),
+    });
+  }
+
+  function regenerateMeal() {
+    if (!lastConstraints) return;
+    accept.reset();
+    generate.mutate(
+      { ...lastConstraints, excluded_meals: excludedMeals },
+      {
+        onSuccess: (meal) =>
+          setExcludedMeals((current) => [...current, toExclusion(meal)].slice(-20)),
+      },
+    );
   }
 
   function acceptMeal(rating: number | null, notes: string) {
@@ -65,9 +82,15 @@ export function GenerateMealPage() {
           accepting={accept.isPending}
           acceptError={accept.error}
           onAccept={acceptMeal}
-          onRegenerate={() => lastConstraints && generateMeal(lastConstraints)}
+          onRegenerate={regenerateMeal}
         />
       )}
     </>
   );
+}
+
+function toExclusion(meal: MealRecommendation): MealExclusion {
+  return {
+    items: meal.items.map(({ food_id, servings }) => ({ food_id, servings })),
+  };
 }

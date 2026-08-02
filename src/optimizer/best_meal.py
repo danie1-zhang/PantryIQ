@@ -74,6 +74,7 @@ class MealOptimizer:
         random_seed: int | None = 42,
         max_items_per_meal: int = 6,
         max_total_servings: float = 8,
+        excluded_meals: list[dict[str, float]] | None = None,
     ) -> None:
         """
         Initialize the optimizer.
@@ -102,6 +103,9 @@ class MealOptimizer:
         self.constraints = constraints
         self.max_items_per_meal = max_items_per_meal
         self.max_total_servings = max_total_servings
+        self.excluded_meal_signatures = {
+            self._meal_signature(meal) for meal in (excluded_meals or [])
+        }
         self.random = random.Random(random_seed)
         self.evaluator = NutritionConstraintEvaluator(self.pantry_foods)
 
@@ -127,6 +131,8 @@ class MealOptimizer:
             candidate = self.generate_candidate_meal()
 
             if candidate is None:
+                continue
+            if self._meal_signature(candidate) in self.excluded_meal_signatures:
                 continue
 
             evaluation = self.evaluator.evaluate(
@@ -167,6 +173,10 @@ class MealOptimizer:
             )
 
         raise RuntimeError("No valid candidate meals could be generated from the pantry.")
+
+    @staticmethod
+    def _meal_signature(meal: Mapping[str, float]) -> tuple[tuple[str, float], ...]:
+        return tuple(sorted((str(food_id), float(servings)) for food_id, servings in meal.items()))
 
     def generate_candidate_meal(self) -> dict[str, float] | None:
         """
