@@ -2,11 +2,10 @@
 
 This document records the main decisions behind the HTTP API. It describes the current implementation, not every feature that may eventually be added.
 
-## Role of the API
+# Role of the API
 
 FastAPI sits between the future React client and the application’s data and business logic:
 
-```text
 HTTP request
     → FastAPI route
     → Pydantic validation
@@ -15,7 +14,6 @@ HTTP request
     → PostgreSQL
     → response schema
     → JSON response
-```
 
 The browser does not connect directly to PostgreSQL or run the optimizer. Ownership checks, nutrition calculations, pantry updates, and transactions stay in the backend.
 
@@ -23,7 +21,7 @@ FastAPI was selected because the optimizer is already written in Python. It also
 
 The application remains a modular monolith. Routes, schemas, services, database code, and optimization code have separate responsibilities, but they run as one deployable backend. There is no current need for service-to-service networking or distributed transactions.
 
-## Versioning and application setup
+# Versioning and application setup
 
 Public endpoints use the `/api/v1` prefix. A later incompatible API can use another version without immediately breaking V1 clients.
 
@@ -37,9 +35,8 @@ The application entry point is `src.app.main:app`. It:
 
 Alembic remains responsible for schema changes. API documentation is available at `/docs` while the application is running.
 
-## Code organization
+# Code organization
 
-```text
 src/
 ├── api/
 │   ├── dependencies.py
@@ -55,7 +52,6 @@ src/
 ├── services/
 ├── optimizer/
 └── legacy/
-```
 
 Routes define HTTP paths, accept validated data, call services, and return response models. They should not contain large queries or transaction workflows.
 
@@ -67,7 +63,7 @@ Dependencies provide one database session per request and resolve the current us
 
 The CSV-era pantry and command-line user classes live in `src/legacy`; `src/database` is reserved for PostgreSQL persistence.
 
-## Validation and data integrity
+# Validation and data integrity
 
 Validation happens at three levels:
 
@@ -87,7 +83,7 @@ Read operations do not commit. Write services commit once at the business bounda
 
 Synchronous SQLAlchemy is used throughout. Introducing a second asynchronous database pattern would complicate session and transaction behavior without helping the current workload.
 
-## Temporary user identity
+# Temporary user identity
 
 Authentication is outside the current API stage. Until JWT support is added, `get_current_user` loads the explicitly seeded `development_user`.
 
@@ -97,7 +93,7 @@ This is suitable only for local development. Before deployment, the dependency m
 
 Owned records are queried using both their ID and the current user’s ID. A record belonging to someone else returns `404`, which avoids disclosing that the record exists.
 
-## Error handling
+# Error handling
 
 Services raise a small set of domain errors:
 
@@ -107,13 +103,13 @@ Services raise a small set of domain errors:
 
 FastAPI handlers translate them to `404`, `400`, and `409` responses. Pydantic validation failures return `422`. Unexpected exceptions remain visible as server errors instead of being mislabeled as client mistakes.
 
-## Endpoint decisions
+# Endpoint decisions
 
-### Health
+# Health
 
 `GET /api/v1/health` returns `{"status": "ok"}`. It confirms that the application is running but does not require a successful database query. A separate readiness check can be added if deployment infrastructure needs one.
 
-### Foods
+# Foods
 
 `GET /api/v1/foods` supports name/brand search, category filtering, limits, and offsets. Results are ordered consistently by name.
 
@@ -121,13 +117,13 @@ FastAPI handlers translate them to `404`, `400`, and `409` responses. Pydantic v
 
 The current `Food` model has no `is_active` column, so every stored food is considered active. Deactivation can be added later if catalog administration requires it.
 
-### Current user
+# Current user
 
 `GET /api/v1/users/me` returns public profile fields and default nutrition goals. It never returns `password_hash`.
 
 `PATCH /api/v1/users/me` updates only supplied profile and nutrition fields. Email, username, password data, IDs, and timestamps cannot be changed through this endpoint.
 
-### Pantry
+# Pantry
 
 `GET /api/v1/pantry` returns the current user’s inventory joined with its canonical food details. By default, unavailable and depleted items are omitted.
 
@@ -139,7 +135,7 @@ New rows return `201`; ordinary updates return `200`. In an extremely narrow con
 
 `DELETE /api/v1/pantry/items/{pantry_item_id}` deletes only the inventory row. It never deletes the canonical food.
 
-### Meal generation
+# Meal generation
 
 `POST /api/v1/meals/generate` loads usable pantry items for the current user and converts them into the DataFrame expected by the existing optimizer.
 
@@ -149,7 +145,7 @@ Generation is synchronous and bounded to at most 100,000 candidates. It does not
 
 Recommendation persistence remains deferred. Regeneration simply calls the same endpoint again.
 
-### Meal acceptance
+# Meal acceptance
 
 `POST /api/v1/meals/accept` performs the main transactional workflow:
 
@@ -168,17 +164,17 @@ The backend never trusts nutrition totals sent by the client. Food names and per
 
 The schema does not currently store total meal cost or cost snapshots. The generation response can calculate cost, but accepted-meal history does not invent fields that are absent from the database.
 
-### Meal history
+# Meal history
 
 `GET /api/v1/meals` returns only the current user’s accepted meals, newest first, with bounded pagination and eagerly loaded items.
 
 `GET /api/v1/meals/{meal_log_id}` returns one owned meal and its snapshots. Missing records and records owned by another user both return `404`.
 
-## Pagination
+# Pagination
 
 Food search, pantry retrieval, and meal history use bounded `limit` and `offset` parameters. Offset pagination is adequate for current data volumes. Cursor pagination can be considered if large datasets make offsets inefficient.
 
-## CORS and configuration
+# CORS and configuration
 
 CORS origins come from validated environment configuration:
 
@@ -190,7 +186,7 @@ Multiple origins may be comma-separated. Production should list only known front
 
 Other configuration currently includes `ENVIRONMENT` and `DATABASE_URL`. `.env` and `.env.test` are ignored; `.env.example` contains safe placeholders.
 
-## Testing and CI
+# Testing and CI
 
 API tests use `nutrition_optimizer_test`, apply Alembic migrations, and clean the test tables between cases. The settings layer refuses test mode unless the database name ends in `_test`.
 
@@ -200,7 +196,7 @@ The concurrent pantry test uses two independent SQLAlchemy sessions to verify th
 
 GitHub Actions runs Black, Ruff, the complete pytest suite, and an application-import check against a PostgreSQL service for every push and pull request.
 
-## Deliberately deferred work
+# Deliberately deferred work
 
 - JWT authentication and password hashing
 - food deactivation and catalog administration

@@ -17,3 +17,9 @@ data/raw/private/
 
 # logs
 *.log
+
+# frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/*.tsbuildinfo

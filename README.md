@@ -12,7 +12,7 @@ Meal planning is often treated as a search problem:
 
 This project explores that problem by combining pantry management, nutrition evaluation, and optimization.
 
-Version 1 established the optimization pipeline. The current version adds a PostgreSQL persistence layer while keeping the API and frontend as future work.
+Version 1 established the optimization pipeline. The current application adds PostgreSQL persistence, a FastAPI API, and a React frontend.
 
 ---
 
@@ -28,6 +28,8 @@ Version 1 established the optimization pipeline. The current version adds a Post
 - PostgreSQL persistence with SQLAlchemy 2
 - Alembic database migrations
 - Isolated unit and PostgreSQL integration tests
+- FastAPI endpoints for pantry, profiles, and meals
+- Responsive React and TypeScript frontend
 
 ---
 
@@ -106,6 +108,31 @@ uv run uvicorn src.app.main:app --reload
 
 The API is available under `http://127.0.0.1:8000/api/v1`. Interactive OpenAPI documentation is available at `http://127.0.0.1:8000/docs`.
 
+### Run the frontend
+
+In a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. Vite proxies `/api` requests to the local FastAPI server. To use another API host, set `VITE_API_BASE_URL` to its full `/api/v1` URL before starting Vite.
+
+Frontend checks:
+
+```bash
+cd frontend
+npm run typecheck
+npm run lint
+npm run format:check
+npm test
+npm run build
+```
+
+Run `npm run format` after editing frontend files to apply the shared formatting rules.
+
 ---
 
 ## Project Structure
@@ -131,6 +158,8 @@ The API is available under `http://127.0.0.1:8000/api/v1`. Interactive OpenAPI d
 │       └── best_meal.py
 │
 ├── alembic/
+├── frontend/
+│   └── src/
 ├── scripts/
 │   └── seed_food_catalog.py
 └── tests/
@@ -203,7 +232,7 @@ Optional
 
 ## Current Architecture
 
-The project currently consists of the optimizer, legacy CSV pantry workflow, and PostgreSQL persistence layer.
+The project consists of the optimizer, PostgreSQL persistence layer, FastAPI service layer, and React client. The original CSV pantry workflow remains under `src/legacy` for reference.
 
 ### Pantry
 
@@ -217,9 +246,9 @@ Scores individual candidate meals.
 
 Generates candidate meals and returns the best one found.
 
-### User
+### API and frontend
 
-Coordinates the entire application and user interaction.
+FastAPI exposes versioned endpoints under `/api/v1`. The React client uses TanStack Query for API state and keeps route, form, and authentication concerns separate.
 
 ### Database
 
@@ -229,14 +258,12 @@ SQLAlchemy models store users, foods, pantry inventory, and accepted meals in Po
 
 ## Current Limitations
 
-Version 1 intentionally keeps the system simple.
+The current application intentionally keeps several production concerns out of scope.
 
 Current limitations include
 
 - manually maintained food catalog
 - randomized search
-- no frontend
-- no API routes yet
 - no authentication yet
 - no deployment
 - one meal optimization only
@@ -251,9 +278,8 @@ Planned improvements include
 - automated food ingestion
 - better optimization algorithms
 - continuous serving optimization
-- REST API
-- web frontend
-- user accounts
+- JWT-backed user accounts
+- production deployment
 - machine learning preference model
 - LLM-powered meal assistant
 
