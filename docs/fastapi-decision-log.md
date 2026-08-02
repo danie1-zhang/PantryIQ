@@ -137,13 +137,11 @@ New rows return `201`; ordinary updates return `200`. In an extremely narrow con
 
 # Meal generation
 
-`POST /api/v1/meals/generate` loads usable pantry items for the current user and converts them into the DataFrame expected by the existing optimizer.
+`POST /api/v1/meals/generate` loads usable pantry items for the current user and converts them into typed optimizer inputs. Category spelling is normalized in the adapter boundary.
 
-The adapter maps ORM fields into legacy optimizer names and normalizes the `carbohydrate` category to `carb`. This keeps the working randomized optimizer unchanged.
+OR-Tools CP-SAT is the default strategy. The request can select the original randomized optimizer as a baseline. CP-SAT uses half-serving decisions, a bounded 0.1–10 second solve time, strict nutrition constraints, and a relaxed model when strict nutrition is infeasible. The response includes the method, solver status, objective metadata, solve time, and any constraint violations.
 
-Generation is synchronous and bounded to at most 100,000 candidates. It does not deduct inventory or persist recommendation history. The response clearly identifies near-feasible results when no feasible candidate is found.
-
-Recommendation persistence remains deferred. Regeneration simply calls the same endpoint again.
+The existing nutrition evaluator independently recalculates and scores every result. Generation does not deduct inventory or persist recommendation history. Generate Another simply calls the endpoint again and may return the same deterministic optimum.
 
 # Meal acceptance
 

@@ -564,6 +564,17 @@ small {
 .constraints-form .button {
   max-width: 240px;
 }
+.advanced-options {
+  margin: 0 0 1rem;
+  padding: 0.8rem 0;
+  border-top: 1px solid var(--line);
+}
+.advanced-options summary {
+  margin-bottom: 1rem;
+  color: var(--green);
+  cursor: pointer;
+  font-weight: 700;
+}
 .recommendation {
   margin-top: 1.5rem;
   border-top: 5px solid var(--green);
@@ -593,6 +604,30 @@ small {
 }
 .score-near {
   background: #ffe1a8;
+}
+.solver-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+.solver-metadata span {
+  padding: 0.35rem 0.55rem;
+  color: var(--muted);
+  background: #f1f5f0;
+  border-radius: 99px;
+  font-size: 0.78rem;
+}
+.violation-summary {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  color: #7d4138;
+  background: #fff4e4;
+  border-radius: 10px;
+}
+.violation-summary ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
 }
 .meal-foods {
   margin: 1rem 0;

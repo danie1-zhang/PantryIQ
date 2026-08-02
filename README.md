@@ -21,7 +21,8 @@ Version 1 established the optimization pipeline. The current application adds Po
 - Food catalog
 - Pantry management
 - Nutrition constraint evaluation
-- Randomized candidate meal generation
+- Deterministic OR-Tools CP-SAT meal optimization
+- Optional randomized optimizer baseline
 - Meal feasibility scoring
 - Best meal selection
 - Pantry updates after meal acceptance
@@ -176,16 +177,16 @@ Food Catalog
  Pantry
       │
       ▼
-Generate Candidate Meals
+Build CP-SAT Model
       │
       ▼
 Evaluate Nutrition Constraints
       │
       ▼
-Score Each Candidate
+Solve Strict or Relaxed Model
       │
       ▼
-Return Highest Scoring Meal
+Verify and Return Best Meal
 ```
 
 ---
@@ -200,16 +201,15 @@ Each candidate meal is represented as
 }
 ```
 
-For every generated candidate, the system
+The default CP-SAT optimizer
 
-1. calculates nutrition totals
-2. evaluates constraints
-3. computes a feasibility score
-4. ranks the candidate
+1. converts servings and nutrition data to consistent integer units
+2. enforces pantry, meal-structure, and nutrition constraints
+3. minimizes normalized target deviations and secondary preferences
+4. retries with explicit violation variables if the strict model is infeasible
+5. independently recalculates and scores the solved meal
 
-After evaluating many candidates, the optimizer returns the highest-scoring feasible meal.
-
-If no feasible meal exists, the highest-scoring infeasible meal is returned along with a disclaimer.
+The original randomized search remains available as an explicit baseline. See `docs/cp-sat-optimizer.md` for model details and limitations.
 
 ---
 
@@ -263,7 +263,7 @@ The current application intentionally keeps several production concerns out of s
 Current limitations include
 
 - manually maintained food catalog
-- randomized search
+- half-serving decision increments
 - no authentication yet
 - no deployment
 - one meal optimization only

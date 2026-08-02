@@ -2,13 +2,14 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
 
-import pandas as pd
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from src.database.models import MealLog, MealLogItem, PantryItem, User
-from src.optimizer.best_meal import MealOptimizer
+from src.optimizer.adapter import pantry_items_to_optimizer_foods
+from src.optimizer.cp_sat_optimizer import OptimizationTimeoutError
 from src.optimizer.nutrition_constraints import NutritionConstraints
+from src.optimizer.service import optimize_meal
 from src.schemas.meal import (
     GeneratedMealItem,
     MealAcceptRequest,
@@ -32,30 +33,6 @@ def available_pantry_statement(user: User):
     )
 
 
-def pantry_to_optimizer_frame(items: list[PantryItem]) -> pd.DataFrame:
-    return pd.DataFrame(
-        [
-            {
-                "food_item_id": str(item.food_id),
-                "food_nm": item.food.name,
-                "category": "carb" if item.food.category == "carbohydrate" else item.food.category,
-                "servings": float(item.servings_available),
-                "max_servings": float(item.max_servings_per_meal),
-                "is_available": item.is_available,
-                "calories_per_serving": float(item.food.calories),
-                "protein_g_per_serving": float(item.food.protein),
-                "carbs_g_per_serving": float(item.food.carbs),
-                "fat_g_per_serving": float(item.food.fat),
-                "sugar_g_per_serving": float(item.food.sugar),
-                "fiber_g_per_serving": float(item.food.fiber),
-                "sodium_mg_per_serving": float(item.food.sodium),
-                "cost_per_serving": float(item.food.cost_per_serving or 0),
-            }
-            for item in items
-        ]
-    )
-
-
 def generate_meal(
     session: Session, user: User, request: MealGenerateRequest
 ) -> MealGenerateResponse:
@@ -63,7 +40,9 @@ def generate_meal(
     if not pantry_items:
         raise BusinessRuleError("Pantry is empty")
 
-    frame = pantry_to_optimizer_frame(pantry_items)
+    foods = pantry_items_to_optimizer_foods(pantry_items)
+    if not foods:
+        raise BusinessRuleError("Pantry does not contain any eligible foods")
     constraints = NutritionConstraints(
         calorie_goal=float(request.calorie_goal),
         protein_goal=float(request.protein_goal),
@@ -74,29 +53,58 @@ def generate_meal(
         cost_max=float(request.cost_max) if request.cost_max is not None else None,
     )
     try:
-        result = MealOptimizer(frame, constraints).find_best_meal(request.number_of_candidates)
-    except (ValueError, RuntimeError) as exc:
+        result = optimize_meal(
+            foods,
+            constraints,
+            method=request.optimization_method,
+            time_limit_seconds=request.time_limit_seconds,
+            number_of_candidates=request.number_of_candidates,
+        )
+    except OptimizationTimeoutError as exc:
+        raise ConflictError(str(exc)) from exc
+    except ValueError as exc:
         raise BusinessRuleError(str(exc)) from exc
 
-    foods = {str(item.food_id): item.food for item in pantry_items}
+    database_foods = {str(item.food_id): item.food for item in pantry_items}
     evaluation = result.evaluation
-    disclaimer = (
-        "This is the best meal found by the randomized search and is not guaranteed to be a global optimum."
-        if evaluation.is_feasible
-        else "No fully feasible meal was found. This is the highest-scoring near-feasible candidate found."
-    )
+    if result.optimization_method == "random":
+        disclaimer = (
+            "This is the best meal found by randomized search and is not guaranteed to be globally optimal."
+            if evaluation.is_feasible
+            else "No fully feasible meal was found. This is the highest-scoring randomized candidate."
+        )
+    elif not evaluation.is_feasible:
+        disclaimer = (
+            "No fully feasible meal was available. This solution has the lowest modeled "
+            "constraint violation."
+        )
+    elif result.solver_status == "OPTIMAL":
+        disclaimer = "The solver proved this solution optimal for the encoded model."
+    else:
+        disclaimer = (
+            "This is the best solution found within the solver time limit and is not proven "
+            "globally optimal."
+        )
     return MealGenerateResponse(
+        optimization_method=result.optimization_method,
+        solver_status=result.solver_status,
         is_feasible=evaluation.is_feasible,
         feasibility_score=evaluation.feasibility_score,
         items=[
             GeneratedMealItem(
-                food_id=UUID(food_id), food_name=foods[food_id].name, servings=servings
+                food_id=UUID(food_id),
+                food_name=database_foods[food_id].name,
+                servings=servings,
             )
             for food_id, servings in result.meal.items()
         ],
         totals=NutritionTotals(**evaluation.totals),
         constraint_scores=evaluation.constraint_scores,
         constraints_met=evaluation.constraints_met,
+        constraint_violations=result.constraint_violations,
+        objective_value=result.objective_value,
+        best_objective_bound=result.best_objective_bound,
+        solve_time_seconds=result.solve_time_seconds,
         candidates_generated=result.candidates_generated,
         valid_candidates_evaluated=result.valid_candidates_evaluated,
         disclaimer=disclaimer,

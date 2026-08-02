@@ -33,6 +33,8 @@ export function MealConstraintsForm({
     number_of_candidates: "10000",
   });
   const [error, setError] = useState("");
+  const [method, setMethod] = useState<"cp_sat" | "random">("cp_sat");
+  const [timeLimit, setTimeLimit] = useState("2");
   useEffect(() => {
     if (profile)
       setValues((current) => ({
@@ -59,6 +61,9 @@ export function MealConstraintsForm({
     const candidates = Number(values.number_of_candidates);
     if (candidates < 1 || candidates > 100000)
       return setError("Candidate count must be between 1 and 100,000.");
+    const seconds = Number(timeLimit);
+    if (seconds < 0.1 || seconds > 10)
+      return setError("Solver time limit must be between 0.1 and 10 seconds.");
     setError("");
     onSubmit({
       calorie_goal: Number(values.calorie_goal),
@@ -69,6 +74,8 @@ export function MealConstraintsForm({
       sugar_max: values.sugar_max ? Number(values.sugar_max) : null,
       cost_max: values.cost_max ? Number(values.cost_max) : null,
       number_of_candidates: candidates,
+      optimization_method: method,
+      time_limit_seconds: seconds,
     });
   }
   const field = (name: NumericField, label: string, optional = false) => (
@@ -87,7 +94,7 @@ export function MealConstraintsForm({
     </div>
   );
   return (
-    <form className="card constraints-form" onSubmit={submit}>
+    <form className="card constraints-form" onSubmit={submit} noValidate>
       <div className="form-grid">
         {field("calorie_goal", "Calories")}
         {field("protein_goal", "Protein (g)")}
@@ -96,15 +103,43 @@ export function MealConstraintsForm({
         {field("sodium_max", "Sodium maximum (mg)", true)}
         {field("sugar_max", "Sugar maximum (g)", true)}
         {field("cost_max", "Cost maximum ($)", true)}
-        {field("number_of_candidates", "Candidate count")}
       </div>
+      <details className="advanced-options">
+        <summary>Advanced options</summary>
+        <div className="form-grid">
+          <div className="field">
+            <label htmlFor="optimization-method">Optimization method</label>
+            <select
+              id="optimization-method"
+              value={method}
+              onChange={(event) => setMethod(event.target.value as "cp_sat" | "random")}
+            >
+              <option value="cp_sat">CP-SAT (recommended)</option>
+              <option value="random">Random baseline</option>
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="time-limit">Solver time limit (seconds)</label>
+            <input
+              id="time-limit"
+              type="number"
+              min="0.1"
+              max="10"
+              step="0.1"
+              value={timeLimit}
+              onChange={(event) => setTimeLimit(event.target.value)}
+            />
+          </div>
+          {method === "random" && field("number_of_candidates", "Candidate count")}
+        </div>
+      </details>
       {error && (
         <p className="form-error" role="alert">
           {error}
         </p>
       )}
       <button className="button button-primary button-large" disabled={submitting}>
-        {submitting ? "Searching your pantry…" : "Generate meal"}
+        {submitting ? "Solving your meal…" : "Generate meal"}
       </button>
     </form>
   );

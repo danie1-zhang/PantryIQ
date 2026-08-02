@@ -116,7 +116,7 @@ POST /api/v1/meals/generate
 
 The optimizer runs on the backend. The frontend displays the returned foods, servings, nutrition totals, feasibility score, constraint results, and disclaimer.
 
-Recommendations remain temporary until accepted. Regenerate simply sends the same constraints again; recommendation history is not stored.
+Recommendations remain temporary until accepted. Generate Another sends the same constraints again; a deterministic optimal model may return the same meal. Recommendation history is not stored.
 
 ### Meal acceptance
 
@@ -187,4 +187,4 @@ The current tests mock API hooks. A later end-to-end suite should exercise the r
 - Production hosting must route unknown browser paths back to `index.html` for React Router.
 - There is no top-level React error boundary yet.
 - Generated recommendations are not persisted until accepted.
-- The randomized optimizer cannot guarantee a global optimum.
+- Solver optimality applies only to the encoded nutrition and meal-structure rules, not taste.

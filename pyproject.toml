@@ -8,6 +8,7 @@ dependencies = [
     "alembic>=1.16.5",
     "fastapi>=0.116.1",
     "numpy>=2.4.6",
+    "ortools>=9.14.6206",
     "pandas>=3.0.3",
     "pydantic>=2.13.4",
     "psycopg[binary]>=3.2.9",

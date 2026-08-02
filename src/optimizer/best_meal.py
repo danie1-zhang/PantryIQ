@@ -4,6 +4,13 @@ from dataclasses import dataclass
 from typing import Mapping
 import pandas as pd
 
+from src.optimizer.categories import (
+    CARB_CATEGORIES,
+    CONDIMENT_CATEGORIES,
+    PRODUCE_CATEGORIES,
+    PROTEIN_CATEGORIES,
+    normalize_category,
+)
 from src.optimizer.nutrition_constraints import (
     MealEvaluation,
     NutritionConstraints,
@@ -52,13 +59,10 @@ class MealOptimizer:
     }
 
     # These categories generally form the main structure of a meal.
-    PROTEIN_CATEGORIES = {"protein", "meat", "poultry", "fish", "seafood", "egg", "eggs", "tofu"}
-
-    CARB_CATEGORIES = {"carb", "grain", "rice", "pasta", "bread", "potato"}
-
-    PRODUCE_CATEGORIES = {"vegetable", "vegetables", "fruit", "produce"}
-
-    CONDIMENT_CATEGORIES = {"condiment", "sauce", "seasoning", "dressing"}
+    PROTEIN_CATEGORIES = PROTEIN_CATEGORIES
+    CARB_CATEGORIES = CARB_CATEGORIES
+    PRODUCE_CATEGORIES = PRODUCE_CATEGORIES
+    CONDIMENT_CATEGORIES = CONDIMENT_CATEGORIES
 
     OPTIONAL_CATEGORIES = {"dairy", "fat", "snack", "other"}
 
@@ -316,7 +320,7 @@ class MealOptimizer:
             )
 
         foods["food_item_id"] = foods["food_item_id"].astype(str).str.strip()
-        foods["category"] = foods["category"].fillna("other").astype(str).str.strip().str.lower()
+        foods["category"] = foods["category"].map(normalize_category)
 
         numeric_columns = [
             "servings",

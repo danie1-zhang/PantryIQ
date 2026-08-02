@@ -48,6 +48,8 @@ export const profile: UserProfile = {
   updated_at: "2026-01-01T00:00:00Z",
 };
 export const recommendation: MealRecommendation = {
+  optimization_method: "cp_sat",
+  solver_status: "OPTIMAL",
   is_feasible: true,
   feasibility_score: 94.2,
   items: [{ food_id: food.id, food_name: food.name, servings: 1.5 }],
@@ -63,7 +65,11 @@ export const recommendation: MealRecommendation = {
   },
   constraint_scores: { calories: 95 },
   constraints_met: { calories: true, protein: true },
+  constraint_violations: {},
+  objective_value: 120,
+  best_objective_bound: 120,
+  solve_time_seconds: 0.08,
   candidates_generated: 10000,
   valid_candidates_evaluated: 6800,
-  disclaimer: "Best result from randomized search.",
+  disclaimer: "The solver proved this solution optimal for the encoded model.",
 };

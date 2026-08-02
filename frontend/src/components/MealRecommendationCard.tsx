@@ -30,6 +30,17 @@ export function MealRecommendationCard({
           <span>score</span>
         </div>
       </div>
+      <div className="solver-metadata" aria-label="Optimization details">
+        <span>
+          Method <strong>{meal.optimization_method === "cp_sat" ? "CP-SAT" : "Random"}</strong>
+        </span>
+        <span>
+          Status <strong>{meal.solver_status}</strong>
+        </span>
+        <span>
+          Solve time <strong>{meal.solve_time_seconds.toFixed(3)}s</strong>
+        </span>
+      </div>
       <div className="meal-foods">
         {meal.items.map((item) => (
           <div key={item.food_id}>
@@ -75,6 +86,18 @@ export function MealRecommendationCard({
           </span>
         ))}
       </div>
+      {Object.keys(meal.constraint_violations).length > 0 && (
+        <div className="violation-summary">
+          <strong>Constraint misses</strong>
+          <ul>
+            {Object.entries(meal.constraint_violations).map(([name, amount]) => (
+              <li key={name}>
+                {name}: {amount}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <p className="disclaimer">{meal.disclaimer}</p>
       <div className="accept-fields">
         <div className="field">
@@ -110,7 +133,7 @@ export function MealRecommendationCard({
       )}
       <div className="form-actions">
         <button className="button button-secondary" onClick={onRegenerate} disabled={accepting}>
-          Regenerate
+          Generate another
         </button>
         <button
           className="button button-primary"

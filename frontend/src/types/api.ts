@@ -78,6 +78,8 @@ export interface MealConstraints {
   sugar_max?: number | null;
   cost_max?: number | null;
   number_of_candidates?: number;
+  optimization_method?: "cp_sat" | "random";
+  time_limit_seconds?: number;
 }
 
 export interface NutritionTotals {
@@ -98,12 +100,18 @@ export interface MealItem {
 }
 
 export interface MealRecommendation {
+  optimization_method: "cp_sat" | "random";
+  solver_status: string;
   is_feasible: boolean;
   feasibility_score: number;
   items: MealItem[];
   totals: NutritionTotals;
   constraint_scores: Record<string, number>;
   constraints_met: Record<string, boolean>;
+  constraint_violations: Record<string, number>;
+  objective_value: number | null;
+  best_objective_bound: number | null;
+  solve_time_seconds: number;
   candidates_generated: number;
   valid_candidates_evaluated: number;
   disclaimer: string;

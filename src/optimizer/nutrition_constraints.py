@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from typing import Mapping
 import pandas as pd
 
+FEASIBILITY_TOLERANCE = 0.10
+
 
 @dataclass(frozen=True)
 class NutritionConstraints:
@@ -65,6 +67,7 @@ class NutritionConstraintEvaluator:
     OPTIONAL_FOOD_COLUMNS = {
         "sodium_mg_per_serving": 0.0,
         "sugar_g_per_serving": 0.0,
+        "fiber_g_per_serving": 0.0,
         "cost_per_serving": 0.0,
     }
 
@@ -183,6 +186,7 @@ class NutritionConstraintEvaluator:
             "fat_g": 0.0,
             "sodium_mg": 0.0,
             "sugar_g": 0.0,
+            "fiber_g": 0.0,
             "cost": 0.0,
         }
 
@@ -203,6 +207,7 @@ class NutritionConstraintEvaluator:
             totals["fat_g"] += float(food["fat_g_per_serving"]) * servings
             totals["sodium_mg"] += float(food["sodium_mg_per_serving"]) * servings
             totals["sugar_g"] += float(food["sugar_g_per_serving"]) * servings
+            totals["fiber_g"] += float(food["fiber_g_per_serving"]) * servings
             totals["cost"] += float(food["cost_per_serving"]) * servings
 
         return {name: round(value, 2) for name, value in totals.items()}
@@ -233,6 +238,7 @@ class NutritionConstraintEvaluator:
             "fat_g_per_serving",
             "sodium_mg_per_serving",
             "sugar_g_per_serving",
+            "fiber_g_per_serving",
             "cost_per_serving",
         ]
 
@@ -317,7 +323,7 @@ class NutritionConstraintEvaluator:
     def _within_tolerance(
         actual: float,
         target: float,
-        tolerance: float = 0.10,
+        tolerance: float = FEASIBILITY_TOLERANCE,
     ) -> bool:
         "Return True when actual is within a percentage of target."
         return abs(actual - target) <= target * tolerance

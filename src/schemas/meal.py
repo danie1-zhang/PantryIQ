@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field, StringConstraints, field_validator, model_validator
@@ -20,6 +20,8 @@ class MealGenerateRequest(BaseModel):
     sugar_max: NonnegativeMaximum | None = None
     cost_max: NonnegativeMaximum | None = None
     number_of_candidates: Annotated[int, Field(ge=1, le=100_000)] = 10_000
+    optimization_method: Literal["cp_sat", "random"] = "cp_sat"
+    time_limit_seconds: Annotated[float, Field(ge=0.1, le=10)] = 2.0
 
 
 class GeneratedMealItem(BaseModel):
@@ -40,12 +42,18 @@ class NutritionTotals(BaseModel):
 
 
 class MealGenerateResponse(BaseModel):
+    optimization_method: Literal["cp_sat", "random"]
+    solver_status: str
     is_feasible: bool
     feasibility_score: float
     items: list[GeneratedMealItem]
     totals: NutritionTotals
     constraint_scores: dict[str, float]
     constraints_met: dict[str, bool]
+    constraint_violations: dict[str, float] = Field(default_factory=dict)
+    objective_value: float | None = None
+    best_objective_bound: float | None = None
+    solve_time_seconds: float
     candidates_generated: int
     valid_candidates_evaluated: int
     disclaimer: str
