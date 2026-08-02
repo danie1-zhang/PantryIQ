@@ -2,24 +2,22 @@
 
 The Compose stack runs three services behind one browser-facing frontend origin:
 
-```text
 Browser http://localhost:3000
   -> Nginx frontend container
      -> static React files
      -> /api/* proxy to backend:8000
         -> FastAPI
            -> postgres:5432
-```
 
 Nginx proxies `/api` to FastAPI, so the browser never needs to resolve Docker service names and local authentication cookies stay same-origin. FastAPI remains available directly at `http://localhost:8000` for development and API documentation.
 
-## Prerequisites
+# Prerequisites
 
 - Docker Desktop or Docker Engine with Compose v2
 - Free host ports 3000, 8000, and 5433, or alternate values in `.env`
 - An LLM provider key if natural-language preference parsing should call a live provider
 
-## Configure and start
+# Configure and start
 
 ```bash
 cp .env.example .env
@@ -43,15 +41,12 @@ docker compose ps
 
 Open `http://localhost:3000`. API documentation is at `http://localhost:8000/docs`, and the health endpoint is `http://localhost:8000/api/v1/health`.
 
-## Migrations and food data
+# Migrations and food data
 
 The backend entrypoint waits for PostgreSQL, runs `alembic upgrade head`, and starts Uvicorn only if migration succeeds. It never calls `Base.metadata.create_all()`.
 
 Food seeding is disabled by default. To seed on the next backend start, set:
-
-```text
 SEED_FOODS_ON_START=true
-```
 
 Then recreate the backend:
 
@@ -65,7 +60,7 @@ The seed script upserts foods by external source and ID, so repeated runs update
 docker compose exec backend python scripts/seed_food_catalog.py
 ```
 
-## Common operations
+# Common operations
 
 ```bash
 docker compose logs -f backend
@@ -87,7 +82,7 @@ docker compose down -v
 
 It removes the PostgreSQL volume and all local application data.
 
-## Tests in containers
+# Tests in containers
 
 Backend and frontend Dockerfiles include separate test stages so test dependencies do not enter runtime images.
 
@@ -114,12 +109,12 @@ docker run --rm pantryiq-frontend-test npm run typecheck
 docker build --target runtime -t pantryiq-frontend frontend
 ```
 
-## Authentication and local security
+# Authentication and local security
 
 Local Compose uses an HttpOnly refresh cookie with `SameSite=lax` and `Secure=false` because the documented URL uses HTTP. The access token remains in frontend memory. Production must use HTTPS and set `AUTH_COOKIE_SECURE=true`. Keep an exact production frontend origin in `FRONTEND_ORIGIN` and `CORS_ORIGINS`; never use a wildcard with credentialed requests.
 
 The proxy setup uses relative `VITE_API_BASE_URL=/api/v1`. Backend-only values such as the PostgreSQL password, JWT secret, and LLM API key are runtime environment variables and are not frontend build arguments.
 
-## Production differences
+# Production differences
 
 This Compose file is a stable local deployment, not a complete public-cloud production platform. A public deployment still needs HTTPS termination, managed secret injection, backups, monitoring, production cookie settings, restricted database exposure, provider rate limiting, and an image registry/deployment target.
