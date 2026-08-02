@@ -59,7 +59,7 @@ Schemas define the public contract. SQLAlchemy models are kept separate so datab
 
 Services contain ownership rules, queries, pantry behavior, optimizer integration, and meal-acceptance logic. They raise application exceptions rather than FastAPI exceptions, which keeps them usable outside HTTP code.
 
-Dependencies provide one database session per request and resolve the current user. The current-user dependency is intentionally replaceable so JWT authentication can be added without changing every route and service signature.
+Dependencies provide one database session per request and resolve the current user from a verified bearer access token.
 
 The CSV-era pantry and command-line user classes live in `src/legacy`; `src/database` is reserved for PostgreSQL persistence.
 
@@ -83,13 +83,11 @@ Read operations do not commit. Write services commit once at the business bounda
 
 Synchronous SQLAlchemy is used throughout. Introducing a second asynchronous database pattern would complicate session and transaction behavior without helping the current workload.
 
-# Temporary user identity
+# Authentication and identity
 
-Authentication is outside the current API stage. Until JWT support is added, `get_current_user` loads the explicitly seeded `development_user`.
+Registration hashes passwords with Argon2. Login issues a short-lived JWT access token and an opaque refresh token whose hash is stored in PostgreSQL. Refresh rotates the token; reuse revokes its family. The browser keeps access tokens in memory and refresh tokens in an HttpOnly cookie.
 
-Clients cannot provide arbitrary user IDs. Every user-owned query still receives its identity through the dependency and scopes records by that user.
-
-This is suitable only for local development. Before deployment, the dependency must verify authentication credentials and resolve the actual user.
+Clients cannot provide arbitrary user IDs. Every user-owned query receives its identity through the verified current-user dependency and scopes records by that user.
 
 Owned records are queried using both their ID and the current user’s ID. A record belonging to someone else returns `404`, which avoids disclosing that the record exists.
 
@@ -190,7 +188,7 @@ Other configuration currently includes `ENVIRONMENT` and `DATABASE_URL`. `.env` 
 
 API tests use `nutrition_optimizer_test`, apply Alembic migrations, and clean the test tables between cases. The settings layer refuses test mode unless the database name ends in `_test`.
 
-Tests cover health, food queries, profile updates, pantry ownership and CRUD, atomic upserts, deterministic optimizer responses, meal acceptance, rollback behavior, snapshots, and meal-history isolation.
+Tests cover authentication and refresh rotation, health, food queries, profile updates, pantry ownership and CRUD, atomic upserts, deterministic optimizer responses, meal acceptance, rollback behavior, snapshots, and meal-history isolation.
 
 The concurrent pantry test uses two independent SQLAlchemy sessions to verify that simultaneous first additions create one row with the combined quantity.
 
@@ -198,7 +196,6 @@ GitHub Actions runs Black, Ruff, the complete pytest suite, and an application-i
 
 # Deliberately deferred work
 
-- JWT authentication and password hashing
 - food deactivation and catalog administration
 - recommendation-history tables
 - React integration

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 from collections.abc import Generator
 from pathlib import Path
 
@@ -9,12 +10,15 @@ from alembic.config import Config
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
+os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key-that-is-at-least-32-characters")
+os.environ.setdefault("AUTH_COOKIE_SECURE", "false")
+
 from src.app.settings import Settings
 from src.legacy.pantry import Pantry
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TEST_ENV_FILE = PROJECT_ROOT / ".env.test"
-DATABASE_TABLES = "meal_log_items, meal_logs, pantry_items, foods, users"
+DATABASE_TABLES = "refresh_tokens, meal_log_items, meal_logs, pantry_items, foods, users"
 
 
 @pytest.fixture(scope="session")

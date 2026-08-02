@@ -1,7 +1,12 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from src.services.exceptions import BusinessRuleError, ConflictError, ResourceNotFoundError
+from src.services.exceptions import (
+    AuthenticationError,
+    BusinessRuleError,
+    ConflictError,
+    ResourceNotFoundError,
+)
 
 
 def register_exception_handlers(app: FastAPI) -> None:
@@ -18,3 +23,11 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(ConflictError)
     def conflict_handler(request: Request, exc: ConflictError) -> JSONResponse:
         return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"detail": str(exc)})
+
+    @app.exception_handler(AuthenticationError)
+    def authentication_handler(request: Request, exc: AuthenticationError) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": str(exc)},
+            headers={"WWW-Authenticate": "Bearer"},
+        )

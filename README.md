@@ -56,6 +56,13 @@ Create `.env` in the repository root:
 ENVIRONMENT=development
 DATABASE_URL=postgresql+psycopg://YOUR_POSTGRES_USER@localhost:5432/nutrition_optimizer
 CORS_ORIGINS=http://localhost:5173
+FRONTEND_ORIGIN=http://localhost:5173
+JWT_SECRET_KEY=replace-with-output-from-openssl-rand-hex-32
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=15
+REFRESH_TOKEN_EXPIRE_DAYS=7
+AUTH_COOKIE_SECURE=false
+AUTH_COOKIE_SAMESITE=lax
 ```
 
 Homebrew PostgreSQL usually creates a role matching your macOS username. You can check it with:
@@ -70,10 +77,9 @@ Create the development database, apply its migrations, and import the food catal
 createdb nutrition_optimizer
 uv run alembic upgrade head
 uv run python scripts/seed_food_catalog.py
-uv run python scripts/seed_development_user.py
 ```
 
-The seed command can be run again safely. Existing catalog records are updated rather than duplicated.
+Create an account through `/register`. The catalog seed command can be run again safely; existing catalog records are updated rather than duplicated.
 
 ### Test environment
 
@@ -83,6 +89,9 @@ Create a second file named `.env.test`:
 ENVIRONMENT=test
 DATABASE_URL=postgresql+psycopg://YOUR_POSTGRES_USER@localhost:5432/nutrition_optimizer_test
 CORS_ORIGINS=http://localhost:5173
+FRONTEND_ORIGIN=http://localhost:5173
+JWT_SECRET_KEY=a-test-only-secret-that-is-at-least-32-characters
+AUTH_COOKIE_SECURE=false
 ```
 
 Create the isolated test database:
@@ -254,6 +263,10 @@ FastAPI exposes versioned endpoints under `/api/v1`. The React client uses TanSt
 
 SQLAlchemy models store users, foods, pantry inventory, and accepted meals in PostgreSQL. Alembic manages schema changes, and the CSV catalog provides the initial food records.
 
+### Authentication
+
+Argon2 password hashes protect credentials. Short-lived JWT access tokens remain in browser memory, while rotating opaque refresh tokens use an HttpOnly cookie and hashed PostgreSQL records. See `docs/authentication.md`.
+
 ---
 
 ## Current Limitations
@@ -264,7 +277,6 @@ Current limitations include
 
 - manually maintained food catalog
 - half-serving decision increments
-- no authentication yet
 - no deployment
 - one meal optimization only
 - no learned user preferences
@@ -278,7 +290,7 @@ Planned improvements include
 - automated food ingestion
 - better optimization algorithms
 - continuous serving optimization
-- JWT-backed user accounts
+- email verification and account recovery
 - production deployment
 - machine learning preference model
 - LLM-powered meal assistant

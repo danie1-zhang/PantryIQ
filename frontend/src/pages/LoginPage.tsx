@@ -1,20 +1,31 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { errorMessage } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 
 export function LoginPage() {
   const { isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [email, setEmail] = useState("developer@example.com");
-  const [password, setPassword] = useState("development");
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    login();
-    const target =
-      (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? "/dashboard";
-    navigate(target, { replace: true });
+    setSubmitting(true);
+    setError(null);
+    try {
+      await login({ email_or_username: identifier, password });
+      const target =
+        (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? "/dashboard";
+      navigate(target, { replace: true });
+    } catch (caught) {
+      setError(errorMessage(caught));
+    } finally {
+      setSubmitting(false);
+    }
   }
   return (
     <main className="login-page">
@@ -35,18 +46,21 @@ export function LoginPage() {
       </section>
       <section className="login-panel">
         <form className="login-form" onSubmit={submit}>
-          <p className="eyebrow">Development access</p>
+          <p className="eyebrow">Account access</p>
           <h2>Welcome back</h2>
-          <p className="muted">
-            Authentication is coming next. For now, continue with the seeded development profile.
-          </p>
+          <p className="muted">Log in to access your pantry and nutrition goals.</p>
+          {error && (
+            <div className="state-panel state-error" role="alert">
+              {error}
+            </div>
+          )}
           <div className="field">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="identifier">Email or username</label>
             <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="identifier"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              autoComplete="username"
               required
             />
           </div>
@@ -57,12 +71,15 @@ export function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               required
             />
           </div>
-          <button className="button button-primary button-large">Continue to dashboard</button>
+          <button className="button button-primary button-large" disabled={submitting}>
+            {submitting ? "Logging in…" : "Log in"}
+          </button>
           <p className="development-note">
-            Local development only · No credentials are sent to the API
+            New to PantryIQ? <Link to="/register">Create an account</Link>
           </p>
         </form>
       </section>

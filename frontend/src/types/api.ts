@@ -65,6 +65,33 @@ export interface UserProfile {
   updated_at: string;
 }
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  username: string;
+  name: string;
+  created_at: string;
+}
+
+export interface RegisterInput {
+  email: string;
+  username: string;
+  name: string;
+  password: string;
+}
+
+export interface LoginInput {
+  email_or_username: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: "bearer";
+  expires_in: number;
+  user: AuthUser;
+}
+
 export type UserProfileUpdate = Partial<
   Omit<UserProfile, "id" | "email" | "username" | "created_at" | "updated_at">
 >;

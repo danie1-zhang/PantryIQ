@@ -7,9 +7,11 @@ import { LoginPage } from "../pages/LoginPage";
 import { MealHistoryPage } from "../pages/MealHistoryPage";
 import { PantryPage } from "../pages/PantryPage";
 import { ProfilePage } from "../pages/ProfilePage";
+import { RegisterPage } from "../pages/RegisterPage";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
+  { path: "/register", element: <RegisterPage /> },
   {
     element: <ProtectedRoute />,
     children: [

@@ -59,7 +59,7 @@ def make_meal_log(user: User, **overrides: object) -> MealLog:
     return MealLog(**values)
 
 
-def test_initial_migration_creates_only_expected_tables(test_engine: Engine) -> None:
+def test_migrations_create_only_expected_tables(test_engine: Engine) -> None:
     tables = set(inspect(test_engine).get_table_names())
 
     assert tables == {
@@ -68,6 +68,7 @@ def test_initial_migration_creates_only_expected_tables(test_engine: Engine) -> 
         "meal_log_items",
         "meal_logs",
         "pantry_items",
+        "refresh_tokens",
         "users",
     }
 

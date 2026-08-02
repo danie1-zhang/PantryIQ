@@ -12,3 +12,7 @@ class BusinessRuleError(ApplicationError):
 
 class ConflictError(ApplicationError):
     """Persisted state conflicts with the requested operation."""
+
+
+class AuthenticationError(ApplicationError):
+    """Credentials are absent, invalid, expired, revoked, or inactive."""

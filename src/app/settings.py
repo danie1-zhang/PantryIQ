@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Annotated, Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 Environment = Literal["development", "test", "staging", "production"]
@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["http://localhost:5173"]
     )
+    jwt_secret_key: SecretStr
+    jwt_algorithm: Literal["HS256", "HS384", "HS512"] = "HS256"
+    access_token_expire_minutes: int = Field(default=15, ge=1, le=1440)
+    refresh_token_expire_days: int = Field(default=7, ge=1, le=90)
+    auth_cookie_secure: bool = True
+    auth_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
+    frontend_origin: str = "http://localhost:5173"
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -42,6 +49,12 @@ class Settings(BaseSettings):
         database_name = self.database_url.rstrip("/").rsplit("/", 1)[-1].split("?", 1)[0]
         if self.environment == "test" and not database_name.endswith("_test"):
             raise ValueError("The test environment requires a database name ending in '_test'")
+        if len(self.jwt_secret_key.get_secret_value()) < 32:
+            raise ValueError("JWT_SECRET_KEY must be at least 32 characters")
+        if self.environment in {"staging", "production"} and not self.auth_cookie_secure:
+            raise ValueError("AUTH_COOKIE_SECURE must be true outside development and test")
+        if self.auth_cookie_samesite == "none" and not self.auth_cookie_secure:
+            raise ValueError("SameSite=None cookies must be secure")
         return self
 
 

@@ -29,7 +29,7 @@ Next.js was unnecessary because the app does not need server rendering, server c
 ```text
 frontend/src/
 ├── api/          API client and resource hooks
-├── auth/         temporary login boundary
+├── auth/         session context, route protection, and in-memory token state
 ├── components/   reusable forms and cards
 ├── pages/        route-level views
 ├── router/       route definitions
@@ -51,7 +51,7 @@ VITE_API_BASE_URL=https://example.com/api/v1
 
 Only public browser configuration should use a `VITE_` variable. Secrets must remain in the backend environment.
 
-The client contains a temporary hook for attaching a future bearer token. When authentication is implemented, secure HTTP-only cookies would be safer than storing long-lived tokens in local storage.
+The client attaches the in-memory access token as a bearer credential and includes the HttpOnly refresh cookie. On a `401`, it coordinates one refresh request and retries the original request once.
 
 ## Server state
 
@@ -69,6 +69,7 @@ Local React state is limited to form values, modal visibility, and the current u
 
 ```text
 /login
+/register
 /dashboard
 /pantry
 /generate-meal
@@ -80,9 +81,7 @@ Protected routes share the same layout and navigation. Unknown routes redirect t
 
 ### Login
 
-Authentication is not implemented yet. The login page only enables access to the seeded development user already selected by FastAPI. The entered values are not sent to the backend.
-
-This behavior is isolated under `src/auth` so real authentication can replace it without changing every page. It is strictly a development convenience and must not be treated as security.
+Registration creates an account and then redirects to login. Login stores the short-lived access token in memory. The refresh token stays in an HttpOnly cookie. Protected routes wait for initial session restoration before redirecting, and logout clears private TanStack Query data.
 
 ### Dashboard
 
@@ -116,7 +115,7 @@ POST /api/v1/meals/generate
 
 The optimizer runs on the backend. The frontend displays the returned foods, servings, nutrition totals, feasibility score, constraint results, and disclaimer.
 
-Recommendations remain temporary until accepted. Generate Another sends the same constraints again; a deterministic optimal model may return the same meal. Recommendation history is not stored.
+Recommendations remain temporary until accepted. Generate Another excludes up to 20 recommendations from the current page session, so an exact meal is not repeated while an alternative exists. Recommendation history is not stored.
 
 ### Meal acceptance
 
@@ -164,7 +163,7 @@ The current modal does not trap keyboard focus. That should be improved before t
 
 ## Testing and code quality
 
-Vitest and React Testing Library cover pantry rendering, add and edit validation, edit and delete actions, meal constraints, recommendation acceptance, profile updates, and loading and error states.
+Vitest and React Testing Library cover authentication restoration, login, registration, protected routes, refresh coordination, cache clearing, pantry behavior, meal generation and acceptance, profile updates, and loading and error states.
 
 The frontend checks are:
 
@@ -182,7 +181,6 @@ The current tests mock API hooks. A later end-to-end suite should exercise the r
 
 ## Known limitations
 
-- Login is development-only and provides no real authentication.
 - List pages do not yet expose pagination controls.
 - Production hosting must route unknown browser paths back to `index.html` for React Router.
 - There is no top-level React error boundary yet.

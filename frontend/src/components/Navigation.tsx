@@ -27,9 +27,9 @@ export function Navigation() {
       </div>
       <button
         className="button button-ghost"
-        onClick={() => {
-          logout();
-          navigate("/login");
+        onClick={async () => {
+          await logout();
+          navigate("/login", { replace: true });
         }}
       >
         Log out

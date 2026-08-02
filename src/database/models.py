@@ -74,12 +74,42 @@ class User(TimestampMixin, Base):
     fat_goal: Mapped[Decimal] = mapped_column(Numeric(8, 2), default=78, server_default="78")
     sodium_maximum: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
     sugar_maximum: Mapped[Decimal | None] = mapped_column(Numeric(8, 2))
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False
+    )
 
     pantry_items: Mapped[list[PantryItem]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
     meal_logs: Mapped[list[MealLog]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
+    )
+    refresh_tokens: Mapped[list[RefreshToken]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+
+
+class RefreshToken(TimestampMixin, Base):
+    __tablename__ = "refresh_tokens"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    family_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    replaced_by_token_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("refresh_tokens.id", ondelete="SET NULL")
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    user: Mapped[User] = relationship(back_populates="refresh_tokens")
+    replacement: Mapped[RefreshToken | None] = relationship(
+        remote_side="RefreshToken.id", foreign_keys=[replaced_by_token_id]
     )
 
 

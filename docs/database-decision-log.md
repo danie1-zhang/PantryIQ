@@ -208,7 +208,7 @@ FastAPI will use one SQLAlchemy session per request. The session is opened at th
 
 # Authentication and authorization
 
-Authentication comes after the pantry and meal flows. Registration will hash passwords before storing them. Login will verify the hash and issue signed tokens.
+Registration hashes passwords before storage. Login issues signed short-lived access tokens and opaque rotating refresh tokens. Only refresh-token hashes are stored in PostgreSQL.
 
 Protected routes must determine `user_id` from the verified identity. The frontend must not be allowed to select another user's ID in a pantry or meal request.
 
@@ -216,13 +216,12 @@ Protected routes must determine `user_id` from the verified identity. The fronte
 
 Local configuration lives in `.env`, which is ignored by Git. A committed `.env.example` may document required variable names using placeholder values.
 
-Expected configuration will eventually include:
+Expected configuration includes:
 
 ```text
 DATABASE_URL
 JWT_SECRET_KEY
 USDA_API_KEY
-RABBITMQ_URL
 ```
 
 Production secrets belong in the deployment platform's secret manager, not in the repository.
@@ -241,7 +240,7 @@ An accepted-meal event should only be published after the database transaction c
 2. Food search and pantry CRUD endpoints.
 3. Optimizer integration and transactional meal acceptance.
 4. Pantry, meal generation, and history screens.
-5. Registration, password hashing, and token authentication.
+5. Registration, password hashing, and token authentication. (complete)
 6. Docker and local service orchestration.
 7. RabbitMQ and the first justified background task.
 

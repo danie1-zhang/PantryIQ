@@ -6,8 +6,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session, sessionmaker
 
 from src.app.main import app
+from src.app.settings import get_settings
 from src.database.models import Food, User
 from src.database.session import get_db
+from src.security.tokens import create_access_token
 
 
 @pytest.fixture(autouse=True)
@@ -22,13 +24,18 @@ def api_session(test_session_factory: sessionmaker[Session]) -> Generator[Sessio
 
 
 @pytest.fixture
-def client(test_session_factory: sessionmaker[Session]) -> Generator[TestClient, None, None]:
+def client(
+    test_session_factory: sessionmaker[Session], api_user: User
+) -> Generator[TestClient, None, None]:
     def override_get_db() -> Generator[Session, None, None]:
         with test_session_factory() as session:
             yield session
 
     app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
+    with TestClient(
+        app,
+        headers={"Authorization": f"Bearer {create_access_token(api_user.id, get_settings())}"},
+    ) as test_client:
         yield test_client
     app.dependency_overrides.clear()
 
@@ -37,8 +44,8 @@ def client(test_session_factory: sessionmaker[Session]) -> Generator[TestClient,
 def api_user(api_session: Session) -> User:
     user = User(
         email="api@example.com",
-        username="development_user",
-        password_hash="test-only",
+        username="api_user",
+        password_hash="test-only-not-used-for-authentication",
         name="API User",
     )
     api_session.add(user)
